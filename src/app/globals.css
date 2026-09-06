@@ -10776,6 +10776,37 @@ body {
   font-size: var(--reizo-font-micro) !important;
 }
 
+/* Account menu pages share the same content inset and title baseline. */
+.portal-home .portal-account-main .account-task-board {
+  box-sizing: border-box;
+  padding: 28px;
+}
+
+.portal-home .portal-account-main .account-task-board-head h1 {
+  margin: 0 0 6px;
+}
+
+/* Make account navigation groups read as section headings, not metadata. */
+.portal-home .portal-account-side-nav > div {
+  gap: 3px;
+}
+
+.portal-home .portal-account-side-nav .portal-account-side-kicker {
+  margin: 11px 10px 3px;
+  padding: 0 0 0 9px !important;
+  border-left: 3px solid #4b88e8;
+  color: #275b9f;
+  font-family: inherit;
+  font-size: 16px !important;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 24px;
+}
+
+.portal-home .portal-account-side-nav > div:first-child .portal-account-side-kicker {
+  margin-top: 3px;
+}
+
 /* The enterprise and legacy marketing surfaces use separate style modules,
    but follow the same fixed-canvas rule as the public portal. */
 .marketing-public-shell {

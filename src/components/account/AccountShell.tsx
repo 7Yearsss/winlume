@@ -150,7 +150,6 @@ export default function AccountShell({ children }: { children: ReactNode }) {
 
         <div className="portal-account-layout">
           <aside className="portal-account-side">
-            <p className="portal-account-side-kicker">Account</p>
             <h2 className="portal-account-side-title">个人中心</h2>
             <AccountNav pathname={pathname} isAdmin={isAdmin} />
             <div className="portal-account-side-help">
@@ -159,7 +158,7 @@ export default function AccountShell({ children }: { children: ReactNode }) {
                 <BookOpen aria-hidden />
                 文档中心
               </Link>
-              <Link href="/account/community">
+              <Link href="https://reizo-ai.com/support/contact" target="_blank" rel="noreferrer">
                 <CircleHelp aria-hidden />
                 帮助支持
               </Link>

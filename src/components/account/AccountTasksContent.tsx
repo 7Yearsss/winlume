@@ -76,7 +76,7 @@ export default function AccountTasksContent() {
   return (
     <div className="account-task-board">
       <header className="account-task-board-head">
-        <div><p>用户中心 / 任务看板</p><h1>任务看板</h1><span>查看工作台中任务的实时进度与状态</span></div>
+        <div><h1>任务看板</h1><span>查看工作台中任务的实时进度与状态</span></div>
         <button type="button" onClick={() => void load()}><RefreshCw aria-hidden />刷新</button>
       </header>
 

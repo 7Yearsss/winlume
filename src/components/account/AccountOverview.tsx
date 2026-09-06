@@ -31,7 +31,7 @@ export default function AccountOverview() {
 
   return (
     <div className="account-personal">
-      <header><p>用户中心 / 个人中心</p><h1>个人中心</h1><span>查看账户信息与安全设置</span></header>
+      <header><h1>个人中心</h1><span>查看账户信息与安全设置</span></header>
       {error ? <p className="portal-account-notice">{error}</p> : null}
       <div className="account-personal-stats">
         <article><WalletCards aria-hidden /><span>余额</span><strong>¥{fmt(available)}</strong><Link href="/account/wallet">去充值</Link></article>
