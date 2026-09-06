@@ -16,7 +16,7 @@ const architecture = [
 
 export default function EnterprisePortal() {
   return (
-    <main className={styles.page}>
+    <main className={`${styles.page} ${styles.fixedCanvas}`}>
       <EnterprisePageNav active="home" />
 
       <section className={styles.hero}>

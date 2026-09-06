@@ -1293,3 +1293,93 @@
     gap: 2px;
   }
 }
+
+/* Fixed public portal contract: docs share the same desktop canvas and
+   typography hierarchy as the rest of the public product. */
+.docs-root {
+  min-width: var(--reizo-public-canvas);
+  font-size: var(--reizo-font-body);
+  line-height: 1.6;
+}
+
+.docs-root .docs-frame {
+  width: var(--reizo-public-canvas) !important;
+  min-width: var(--reizo-public-canvas);
+  margin: 0 auto;
+}
+
+.docs-root .docs-shell-bar,
+.docs-root .docs-backdrop {
+  display: none !important;
+}
+
+.docs-root .docs-body {
+  display: grid !important;
+  grid-template-columns: var(--docs-sidebar-w) minmax(0, 1fr) !important;
+  margin-top: 12px;
+}
+
+.docs-root .docs-sidebar {
+  display: block !important;
+  position: static !important;
+  width: auto !important;
+  height: auto !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.docs-root .docs-main {
+  padding: 28px 36px 64px;
+}
+
+.docs-root .docs-card-grid,
+.docs-root .docs-home-grid,
+.docs-root .docs-hub-facts {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.docs-root .docs-pager {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.docs-root .docs-endpoint-meta > div {
+  grid-template-columns: 132px minmax(0, 1fr) !important;
+  gap: 12px;
+}
+
+.docs-root .docs-page h1,
+.docs-root .docs-endpoint h1,
+.docs-root .docs-home-head h1 {
+  font-size: var(--reizo-font-page) !important;
+  line-height: 46px !important;
+}
+
+.docs-root .docs-section h2,
+.docs-root .docs-section-head h2 {
+  font-size: var(--reizo-font-section) !important;
+  line-height: 31px !important;
+}
+
+.docs-root .docs-card h3,
+.docs-root .docs-endpoint-path {
+  font-size: var(--reizo-font-card) !important;
+  line-height: 24px !important;
+}
+
+.docs-root .docs-lead,
+.docs-root .docs-auth-card p,
+.docs-root .docs-muted,
+.docs-root .docs-muted-inline,
+.docs-root .docs-steps {
+  font-size: var(--reizo-font-body) !important;
+}
+
+.docs-root .docs-sidebar,
+.docs-root .docs-side-link,
+.docs-root .docs-side-cat-toggle,
+.docs-root .docs-side-pages > a,
+.docs-root .docs-btn,
+.docs-root .docs-chip-btn,
+.docs-root .docs-card p {
+  font-size: var(--reizo-font-control) !important;
+}

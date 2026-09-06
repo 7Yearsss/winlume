@@ -34,7 +34,7 @@ export default async function ProductDetailPage({
   const related = relatedProducts(product);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10">
+    <div className="marketing-product-detail mx-auto max-w-7xl px-4 py-10">
       {/* 面包屑 */}
       <nav className="flex items-center gap-1.5 text-sm text-ink-400">
         <Link href="/" className="transition hover:text-ink-800">首页</Link>
@@ -44,9 +44,9 @@ export default async function ProductDetailPage({
         <span className="text-ink-700">{product.name}</span>
       </nav>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-3">
+      <div className="marketing-product-detail-grid">
         {/* 主栏 */}
-        <div className="lg:col-span-2">
+        <div className="marketing-product-detail-main">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-md bg-canvas px-2.5 py-0.5 text-xs text-ink-600 ring-1 ring-line">
               {product.type}
@@ -89,7 +89,7 @@ export default async function ProductDetailPage({
 
           <section className="mt-10">
             <h2 className="text-lg font-semibold text-ink-900">功能特性</h2>
-            <ul className="mt-4 grid gap-2.5 sm:grid-cols-2">
+            <ul className="marketing-product-features">
               {product.features.map((f) => (
                 <li
                   key={f}
@@ -104,7 +104,7 @@ export default async function ProductDetailPage({
         </div>
 
         {/* 价格侧栏 */}
-        <aside className="lg:col-span-1">
+        <aside className="marketing-product-detail-aside">
           <div className="sticky top-24 rounded-xl border border-line bg-surface p-6">
             <p className="font-mono text-[11px] uppercase tracking-widest text-ink-400">
               计费
@@ -152,7 +152,7 @@ export default async function ProductDetailPage({
       {related.length > 0 && (
         <section className="mt-16">
           <h2 className="text-lg font-semibold text-ink-900">相关产品</h2>
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="marketing-product-related">
             {related.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}

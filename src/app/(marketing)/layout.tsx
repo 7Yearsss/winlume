@@ -41,12 +41,12 @@ export default function MarketingLayout({
           </div>
         </div>
       ) : (
-        <>
+        <div className="marketing-public-shell">
           <AnnouncementBar />
           <SiteHeader />
           <main className="flex-1">{children}</main>
           <SiteFooter />
-        </>
+        </div>
       )}
     </MarketingDensityShell>
   );

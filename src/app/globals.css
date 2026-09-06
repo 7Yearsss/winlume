@@ -10331,3 +10331,524 @@ body {
   .portal-account-main .account-personal-stats span,
   .portal-account-main .account-task-stats span { font-size: 13px; }
 }
+
+/* ========================================================================
+   Fixed public portal contract
+
+   Public portal pages use one desktop canvas at every viewport size. A
+   narrower viewport exposes the native browser scrollbar instead of shrinking
+   type or switching the information architecture into a mobile layout.
+   ======================================================================== */
+:root {
+  --reizo-public-canvas: 1500px;
+  --reizo-font-page: 38px;
+  --reizo-font-section: 24px;
+  --reizo-font-card: 18px;
+  --reizo-font-body: 16px;
+  --reizo-font-control: 15px;
+  --reizo-font-meta: 13px;
+  --reizo-font-micro: 12px;
+  --reizo-font-metric: 28px;
+}
+
+body {
+  overflow-x: auto;
+}
+
+.portal-home {
+  min-width: var(--reizo-public-canvas);
+  overflow-x: visible;
+  font-size: var(--reizo-font-body);
+  line-height: 24px;
+}
+
+.portal-home .portal-frame,
+.portal-density-shell > .portal-frame,
+.portal-home-dashboard .portal-frame,
+.portal-support-density-shell > .portal-frame {
+  width: var(--reizo-public-canvas) !important;
+  min-width: var(--reizo-public-canvas);
+  max-width: none !important;
+  margin-right: auto !important;
+  margin-left: auto !important;
+  padding: 7px 40px 0 !important;
+  transform: none !important;
+}
+
+.marketing-density-shell {
+  display: block !important;
+  width: var(--reizo-public-canvas) !important;
+  min-width: var(--reizo-public-canvas);
+  min-height: 100vh;
+  margin: 0 auto !important;
+  transform: none !important;
+}
+
+/* Keep the complete desktop navigation visible; there is no compact header. */
+.portal-home .portal-nav {
+  display: grid !important;
+  grid-template-columns: 132px minmax(0, 1fr) max-content max-content;
+  height: 58px !important;
+  min-height: 58px;
+  flex-wrap: nowrap !important;
+  gap: 20px;
+  padding: 0 23px;
+}
+
+.portal-home .portal-main-links {
+  display: flex !important;
+  order: initial !important;
+  width: auto !important;
+  height: 100% !important;
+  justify-content: center;
+  gap: 28px;
+  overflow: visible !important;
+  white-space: nowrap;
+}
+
+.portal-home .portal-user-links {
+  display: flex !important;
+  margin-left: 0 !important;
+}
+
+.portal-home .portal-account-mobile-nav,
+.portal-home .docs-shell-bar,
+.portal-home .docs-backdrop {
+  display: none !important;
+}
+
+/* Home dashboard: retain the three-column desktop information architecture. */
+.portal-home-dashboard {
+  --portal-dashboard-columns: minmax(340px, .9fr) minmax(430px, 1.1fr) minmax(390px, .95fr);
+}
+
+.portal-home-dashboard .portal-search-row {
+  display: grid !important;
+  grid-template-columns: var(--portal-dashboard-columns) !important;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.portal-home-dashboard .portal-search-card {
+  grid-column: 1 / 3 !important;
+  height: 296px !important;
+  min-height: 296px;
+}
+
+.portal-home-dashboard .portal-search-aside,
+.portal-home-dashboard .portal-enterprise-card.portal-search-aside {
+  grid-column: 3 !important;
+  height: 296px !important;
+  min-height: 296px;
+}
+
+.portal-home-dashboard .portal-search-waves {
+  height: 296px !important;
+}
+
+.portal-home-dashboard .portal-discovery-grid {
+  display: grid !important;
+  grid-template-columns: var(--portal-dashboard-columns) !important;
+  grid-template-rows: 360px 184px !important;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.portal-home-dashboard .portal-discovery-grid > .portal-api-card {
+  grid-column: 1 !important;
+  grid-row: 1 / 3 !important;
+}
+
+.portal-home-dashboard .portal-discovery-grid > .portal-tools-card {
+  grid-column: 2 !important;
+  grid-row: 1 / 3 !important;
+  min-height: 0;
+}
+
+.portal-home-dashboard .portal-discovery-grid > .portal-featured-card {
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+  height: auto !important;
+  min-height: 0;
+  margin-top: 0;
+}
+
+.portal-home-dashboard .portal-discovery-grid > .portal-side-cards {
+  display: block !important;
+  grid-column: 3 !important;
+  grid-row: 2 !important;
+  min-height: 0;
+  margin-top: 0;
+}
+
+.portal-home-dashboard .portal-discovery-grid > .portal-side-cards .portal-usage-card {
+  height: 100%;
+}
+
+.portal-home-dashboard .portal-tools-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.portal-home-dashboard .portal-app-showcase-v2 .portal-featured-app-grid {
+  grid-template-columns: minmax(0, .883fr) minmax(0, 1fr) !important;
+}
+
+.portal-home-dashboard .portal-app-showcase-v2 .portal-app-support-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  grid-template-rows: repeat(2, 201px) !important;
+}
+
+.portal-home-dashboard .portal-app-showcase-v2 .portal-featured-app-card {
+  height: 417px;
+  min-height: 417px;
+}
+
+.portal-home-dashboard .portal-app-showcase-v2 .portal-app-support-card {
+  height: 201px;
+  min-height: 201px;
+}
+
+.portal-home-dashboard .portal-system-track {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+.portal-home-dashboard .portal-capability-showcase {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.portal-home-dashboard .portal-capability-hero,
+.portal-home-dashboard .portal-capability-hero.is-models {
+  grid-column: auto !important;
+  height: 224px;
+  min-height: 224px;
+}
+
+.portal-home-dashboard .portal-bottom-footer {
+  grid-template-columns: 1.7fr repeat(5, minmax(0, 1fr)) !important;
+  min-height: 260px;
+}
+
+/* Catalog and account pages retain their desktop sidebars and grids. */
+.portal-home .portal-directory-layout {
+  display: grid !important;
+  grid-template-columns: 358px minmax(0, 1fr) !important;
+  gap: 24px;
+}
+
+.portal-home .portal-directory-side {
+  display: block !important;
+  position: sticky !important;
+  top: 16px;
+  overflow: visible !important;
+}
+
+.portal-home .portal-directory-side h2 {
+  display: block !important;
+}
+
+.portal-home .portal-directory-side > button {
+  display: flex !important;
+  width: 100% !important;
+  min-height: 58px;
+  white-space: normal;
+}
+
+.portal-home .portal-directory-side .portal-directory-model-row {
+  display: grid !important;
+  width: 100% !important;
+  min-height: 58px;
+  white-space: normal;
+}
+
+.portal-home .portal-model-directory-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+}
+
+.portal-home .app-tool-grid,
+.portal-home .app-directory-skill-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.portal-home .portal-account-layout {
+  display: grid !important;
+  grid-template-columns: 248px minmax(0, 1fr) !important;
+  gap: 18px;
+}
+
+.portal-home .portal-account-side {
+  display: block !important;
+  position: sticky !important;
+}
+
+.portal-home .account-personal-stats,
+.portal-home .account-task-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.portal-home .account-personal-panel > div {
+  grid-template-columns: 40px 150px minmax(0, 1fr) auto !important;
+}
+
+.portal-home .account-task-list article {
+  grid-template-columns: 44px minmax(0, 1fr) auto auto !important;
+}
+
+/* Pricing and support use their desktop columns at every viewport. */
+.portal-home .portal-pricing-page,
+.portal-home .portal-personal-footer {
+  width: 1180px !important;
+  min-width: 1180px;
+}
+
+.portal-home .portal-pricing-principles {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.portal-home .portal-pricing-section-head {
+  display: flex !important;
+  align-items: end;
+}
+
+.portal-home .portal-pricing-bottom {
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+}
+
+.portal-home .portal-pricing-bottom > a {
+  width: auto !important;
+  margin: 0 0 0 auto !important;
+}
+
+.portal-home .portal-personal-footer {
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+}
+
+.portal-home .portal-personal-footer nav {
+  width: auto !important;
+  margin-left: auto !important;
+}
+
+.portal-home .portal-support-container {
+  width: 1420px !important;
+  min-width: 1420px;
+}
+
+.portal-home .portal-support-hero {
+  grid-template-columns: minmax(0, 1.12fr) minmax(310px, .88fr) !important;
+  gap: 42px;
+  padding: 42px 44px;
+}
+
+.portal-home .portal-support-section-head {
+  align-items: flex-end !important;
+  flex-direction: row !important;
+}
+
+.portal-home .portal-support-contact-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.portal-home .portal-support-cta {
+  align-items: center !important;
+  flex-direction: row !important;
+}
+
+.portal-home .portal-support-cta-link {
+  width: auto !important;
+}
+
+/* Shared public-portal type scale. */
+.portal-home .portal-search-content h1,
+.portal-home .portal-account-main .account-personal header h1,
+.portal-home .portal-account-main .account-tasks header h1,
+.portal-home .portal-directory-main .portal-catalog-hero h1,
+.portal-home .portal-pricing-hero h1,
+.portal-home .portal-support-hero h1 {
+  font-size: var(--reizo-font-page) !important;
+  line-height: 46px !important;
+}
+
+.portal-home .portal-section-header h2,
+.portal-home .portal-api-card-head h2,
+.portal-home .portal-card-heading h2,
+.portal-home .portal-tools-head h2,
+.portal-home .portal-account-main .account-personal-panel h2,
+.portal-home .portal-pricing-section-head h2,
+.portal-home .portal-support-section-head h2 {
+  font-size: var(--reizo-font-section) !important;
+  line-height: 31px !important;
+}
+
+.portal-home .portal-enterprise-card h2,
+.portal-home .portal-app-showcase-head h2,
+.portal-home .portal-directory-side h2,
+.portal-home .portal-directory-main .portal-catalog-section-head h2 {
+  font-size: var(--reizo-font-section) !important;
+  line-height: 31px !important;
+}
+
+.portal-home .portal-featured-app-copy strong {
+  font-size: var(--reizo-font-section) !important;
+  line-height: 31px !important;
+}
+
+.portal-home .portal-app-support-card strong,
+.portal-home .portal-capability-hero strong,
+.portal-home .portal-support-contact-card h3 {
+  font-size: var(--reizo-font-card) !important;
+  line-height: 24px !important;
+}
+
+.portal-home .portal-search-description,
+.portal-home .portal-enterprise-card p,
+.portal-home .portal-directory-main .portal-catalog-lead,
+.portal-home .portal-pricing-hero-copy > p:not(.portal-eyebrow),
+.portal-home .portal-support-hero-description,
+.portal-home .portal-support-faq-question {
+  font-size: var(--reizo-font-body) !important;
+  line-height: 24px !important;
+}
+
+.portal-home .portal-api-row-label,
+.portal-home .portal-industry-card span,
+.portal-home .portal-usage-stats span,
+.portal-home .portal-app-showcase-head > a,
+.portal-home .portal-directory-model-title strong,
+.portal-home .portal-directory-model-actions a,
+.portal-home .portal-directory-model-actions button {
+  font-size: var(--reizo-font-control) !important;
+}
+
+.portal-home .portal-api-brand,
+.portal-home .portal-tool-card span,
+.portal-home .portal-directory-model-title small,
+.portal-home .portal-directory-model-tags span,
+.portal-home .portal-directory-model-pricing div,
+.portal-home .portal-model-vendor-scroller span,
+.portal-home .portal-model-vendor-scroller small,
+.portal-home .portal-bottom-footer a,
+.portal-home .portal-bottom-brand p,
+.portal-home .portal-bottom-brand small {
+  font-size: var(--reizo-font-meta) !important;
+}
+
+.portal-home .portal-usage-stats strong {
+  font-size: var(--reizo-font-metric) !important;
+  line-height: 1.2 !important;
+}
+
+.portal-home .portal-main-links a,
+.portal-home .portal-user-links a,
+.portal-home .portal-user-links button,
+.portal-home .portal-search-form input,
+.portal-home .portal-search-form button,
+.portal-home .portal-chip-list button,
+.portal-home .portal-arrow-link,
+.portal-home .portal-workbench-button,
+.portal-home .portal-api-trigger,
+.portal-home .portal-api-unavailable,
+.portal-home .portal-account-side-nav a,
+.portal-home .portal-pricing-primary-action,
+.portal-home .portal-pricing-secondary-action,
+.portal-home .portal-pricing-key-link {
+  font-size: var(--reizo-font-control) !important;
+}
+
+.portal-home .portal-support-contact-card p,
+.portal-home .portal-support-inline-link,
+.portal-home .portal-support-inline-link a {
+  font-size: var(--reizo-font-meta) !important;
+  line-height: 19px;
+}
+
+.portal-home .portal-tool-card strong,
+.portal-home .portal-directory-side .portal-directory-model-row strong,
+.portal-home .portal-pricing-principles h2 {
+  font-size: var(--reizo-font-control) !important;
+  line-height: 20px;
+}
+
+.portal-home .portal-eyebrow,
+.portal-home .portal-catalog-meta,
+.portal-home .portal-model-detail-kicker,
+.portal-home .portal-bottom-footer h3 {
+  font-size: var(--reizo-font-micro) !important;
+}
+
+/* The enterprise and legacy marketing surfaces use separate style modules,
+   but follow the same fixed-canvas rule as the public portal. */
+.marketing-public-shell {
+  width: 1280px !important;
+  min-width: 1280px;
+  max-width: none !important;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.marketing-public-shell > main {
+  min-width: 1280px;
+}
+
+.marketing-public-shell .max-w-7xl {
+  width: 1180px !important;
+  max-width: none !important;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.marketing-product-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 32px;
+  margin-top: 32px;
+}
+
+.marketing-product-detail-main,
+.marketing-product-detail-aside {
+  min-width: 0;
+}
+
+.marketing-product-features {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.marketing-product-related {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.marketing-product-detail {
+  font-size: var(--reizo-font-body);
+  line-height: 24px;
+}
+
+.marketing-product-detail h1 {
+  font-size: var(--reizo-font-page) !important;
+  line-height: 46px !important;
+}
+
+.marketing-product-detail h2 {
+  font-size: var(--reizo-font-section) !important;
+  line-height: 31px !important;
+}
+
+.marketing-product-detail .marketing-product-features,
+.marketing-product-detail .marketing-product-related {
+  font-size: var(--reizo-font-control);
+}
+
+.marketing-product-detail .text-sm {
+  font-size: var(--reizo-font-control) !important;
+}
+
+.marketing-product-detail .text-xs {
+  font-size: var(--reizo-font-meta) !important;
+}
