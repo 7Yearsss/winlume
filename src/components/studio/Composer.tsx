@@ -883,6 +883,11 @@ export default function Composer({
     setModelPickerOpen(true);
   }, []);
 
+  const openModelPickerFromFooter = useCallback(() => {
+    setSettingsOpen(true);
+    openModelPicker();
+  }, [openModelPicker]);
+
   useEffect(() => {
     if (!modelPickerOpen) return;
     const root = modelPickerRef.current;
@@ -2780,6 +2785,21 @@ export default function Composer({
             </button>
           </div>
           <div className="composer-footer-actions relative flex shrink-0 items-center gap-1.5">
+            <button
+              type="button"
+              disabled={disabled || modelsLoading}
+              onClick={openModelPickerFromFooter}
+              className="composer-selected-model"
+              title={`当前模型：${model || "选择模型"}`}
+              aria-label={`当前模型：${model || "选择模型"}`}
+            >
+              <span className="composer-selected-model-copy">
+                {activeModelVendor ? <VendorMark vendorKey={activeModelVendor.key} /> : null}
+                <span className="composer-selected-model-name">{model || "选择模型"}</span>
+                {activeModelVendor ? <span className="composer-selected-model-vendor">{activeModelVendor.name}</span> : null}
+              </span>
+              <ChevronDown className="composer-selected-model-chevron" aria-hidden />
+            </button>
             <Popover
               open={settingsOpen}
               onOpenChange={(open) => {

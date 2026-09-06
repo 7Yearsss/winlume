@@ -9505,6 +9505,105 @@ html[data-studio-theme="dark"] .composer-mode-menu {
   }
 }
 
+/* Keep the selected model visible in the composer after closing settings. */
+.composer-selected-model {
+  display: inline-flex;
+  height: 32px;
+  min-width: 0;
+  max-width: 17rem;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0 0.65rem 0 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.68);
+  color: #241e36;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 550;
+  text-align: left;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.composer-selected-model:hover:not(:disabled),
+.composer-selected-model:focus-visible {
+  border-color: rgba(167, 190, 222, 0.95);
+  background: #fff;
+  color: #172033;
+  outline: none;
+}
+
+.composer-selected-model:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.composer-selected-model-copy {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.composer-selected-model-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.composer-selected-model-vendor {
+  flex: 0 0 auto;
+  color: #72839b;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.composer-selected-model-chevron {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  color: #8090a4;
+}
+
+html[data-studio-theme="dark"] .composer-selected-model,
+.studio-root[data-theme="dark"] .composer-selected-model {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: #1c1c1c;
+  color: #ececec;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.04);
+}
+
+html[data-studio-theme="dark"] .composer-selected-model:hover:not(:disabled),
+html[data-studio-theme="dark"] .composer-selected-model:focus-visible,
+.studio-root[data-theme="dark"] .composer-selected-model:hover:not(:disabled),
+.studio-root[data-theme="dark"] .composer-selected-model:focus-visible {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: #2a2a2a;
+  color: #f4f4f4;
+}
+
+html[data-studio-theme="dark"] .composer-selected-model-vendor,
+.studio-root[data-theme="dark"] .composer-selected-model-vendor {
+  color: #a3a3a3;
+}
+
+html[data-studio-theme="dark"] .composer-selected-model-chevron,
+.studio-root[data-theme="dark"] .composer-selected-model-chevron {
+  color: #8a8a8a;
+}
+
+@media (max-width: 560px) {
+  .composer-selected-model {
+    max-width: min(13rem, 42vw);
+  }
+
+  .composer-selected-model-vendor {
+    display: none;
+  }
+}
+
 /* Portal content admin: turn the long form into a calm, sectioned workspace. */
 .portal-admin-content {
   display: grid;
