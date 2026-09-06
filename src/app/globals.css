@@ -10807,6 +10807,13 @@ body {
   margin-top: 3px;
 }
 
+/* Showcase cards are image-led; do not tint the artwork for removed overlays. */
+.portal-home .portal-featured-app-card::after,
+.portal-home .portal-app-support-card::after,
+.portal-home .portal-capability-hero::after {
+  display: none;
+}
+
 /* The enterprise and legacy marketing surfaces use separate style modules,
    but follow the same fixed-canvas rule as the public portal. */
 .marketing-public-shell {

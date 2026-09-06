@@ -91,9 +91,10 @@ type PortalLinkProps = {
   tabIndex?: number;
   target?: "_blank" | "_self";
   "aria-hidden"?: boolean;
+  "aria-label"?: string;
 };
 
-function PortalLink({ href, children, className, onClick, tabIndex, target = "_blank", "aria-hidden": ariaHidden }: PortalLinkProps) {
+function PortalLink({ href, children, className, onClick, tabIndex, target = "_blank", "aria-hidden": ariaHidden, "aria-label": ariaLabel }: PortalLinkProps) {
   return (
     <Link
       href={href}
@@ -103,6 +104,7 @@ function PortalLink({ href, children, className, onClick, tabIndex, target = "_b
       target={target}
       rel={target === "_blank" ? "noopener noreferrer" : undefined}
       aria-hidden={ariaHidden}
+      aria-label={ariaLabel}
     >
       {children}
     </Link>
@@ -287,37 +289,27 @@ const initialManagedApplications: ManagedApplicationShowcase[] = portalApplicati
 const initialManagedCapabilities: ManagedCapabilityShowcase[] = portalCapabilityCards.map((item, index) => ({ id: `capability-${index + 1}`, title: item.title, eyebrow: item.badge, href: item.href, imageUrl: "", tone: index === 1 ? "agent" : index === 2 ? "usage" : "models", enabled: true }));
 
 function ApplicationResultPreview({ kind }: { kind: PortalApplicationPreview }) {
-  if (kind === "storyboard") return <span className="portal-result-preview is-storyboard" aria-hidden><i /><i /><i /><b>12s</b><em>脚本 → 成片</em></span>;
-  if (kind === "poster") return <span className="portal-result-preview is-poster" aria-hidden><small>OPEN STUDIO</small><b>NOVA<br />FORM</b><i>26</i><em>春日视觉提案</em></span>;
-  if (kind === "subtitles") return <span className="portal-result-preview is-subtitles" aria-hidden><i /><b>English narration</b><strong>中文配音已同步</strong><em><i /><i /><i /><i /><i /></em></span>;
-  if (kind === "avatar") return <span className="portal-result-preview is-avatar" aria-hidden><i className="portal-avatar-orbit" /><i className="portal-avatar-head" /><i className="portal-avatar-body" /><b>产品演示 · 00:18</b><em><i /><i /><i /><i /><i /></em></span>;
-  if (kind === "extract") return <span className="portal-result-preview is-extract" aria-hidden><i className="portal-extract-document" /><span><b>¥ 268,000</b><em>合同金额</em><strong>2026.09.30</strong></span></span>;
-  if (kind === "product") return <span className="portal-result-preview is-product" aria-hidden><i /><i /><i /><b>商品主图 · 4:5</b></span>;
-  if (kind === "finance") return <span className="portal-result-preview is-finance" aria-hidden><b>¥ 1.24M</b><i /><span><em>营收</em><strong>+18.6%</strong></span></span>;
-  if (kind === "slides") return <span className="portal-result-preview is-slides" aria-hidden><i><b>Q3</b><em>品牌增长提案</em></i><i /><i /><strong>8 页已生成</strong></span>;
-  if (kind === "code") return <span className="portal-result-preview is-code" aria-hidden><i>const <b>report</b> = await</i><i>  reizo.<b>analyze</b>({`{`}</i><i>    source: "sales.csv"</i><i>  {`}`});</i><strong>✓ 已生成接口</strong></span>;
-  return <span className="portal-result-preview is-contract" aria-hidden><i>SUPPLY AGREEMENT</i><i /><i /><b>付款条款</b><em>风险提示 · 2</em></span>;
+  if (kind === "storyboard") return <span className="portal-result-preview is-storyboard" aria-hidden><i /><i /><i /></span>;
+  if (kind === "poster") return <span className="portal-result-preview is-poster" aria-hidden><i /></span>;
+  if (kind === "subtitles") return <span className="portal-result-preview is-subtitles" aria-hidden><i /><em><i /><i /><i /><i /><i /></em></span>;
+  if (kind === "avatar") return <span className="portal-result-preview is-avatar" aria-hidden><i className="portal-avatar-orbit" /><i className="portal-avatar-head" /><i className="portal-avatar-body" /><em><i /><i /><i /><i /><i /></em></span>;
+  if (kind === "extract") return <span className="portal-result-preview is-extract" aria-hidden><i className="portal-extract-document" /></span>;
+  if (kind === "product") return <span className="portal-result-preview is-product" aria-hidden><i /><i /><i /></span>;
+  if (kind === "finance") return <span className="portal-result-preview is-finance" aria-hidden><i /></span>;
+  if (kind === "slides") return <span className="portal-result-preview is-slides" aria-hidden><i /><i /><i /></span>;
+  if (kind === "code") return <span className="portal-result-preview is-code" aria-hidden />;
+  return <span className="portal-result-preview is-contract" aria-hidden><i /><i /><i /></span>;
 }
 
 function CapabilityEvidence({ kind }: { kind: PortalCapabilityEvidence }) {
-  if (kind === "models") return <span className="portal-capability-evidence is-models" aria-hidden><i>GPT-5</i><i>Claude</i><i>Gemini</i><b>统一路由</b></span>;
-  if (kind === "skills") return <span className="portal-capability-evidence is-skills" aria-hidden><b>/ 商品上新文案</b><i>✓ 标题</i><i>✓ 卖点</i><i>✓ SEO</i></span>;
-  if (kind === "agent") return <span className="portal-capability-evidence is-agent" aria-hidden><i>输入</i><span>→</span><i>研究</i><span>→</span><i>交付</i><b>已完成</b></span>;
-  return <span className="portal-capability-evidence is-usage" aria-hidden><i /><i /><i /><i /><i /><b>本月 ¥ 86.42</b></span>;
+  if (kind === "models") return <span className="portal-capability-evidence is-models" aria-hidden><i /><i /><i /></span>;
+  if (kind === "skills") return <span className="portal-capability-evidence is-skills" aria-hidden><i /><i /><i /></span>;
+  if (kind === "agent") return <span className="portal-capability-evidence is-agent" aria-hidden><i /><span /><i /><span /><i /></span>;
+  return <span className="portal-capability-evidence is-usage" aria-hidden><i /><i /><i /><i /><i /></span>;
 }
 
 function ManagedApplicationVisual({ item, fallback }: { item: ManagedApplicationShowcase; fallback: PortalApplicationPreview }) {
   return item.imageUrl ? <span className="portal-managed-showcase-image"><Image src={item.imageUrl} alt="" fill sizes="(max-width: 760px) 100vw, 50vw" priority unoptimized /></span> : <ApplicationResultPreview kind={fallback} />;
-}
-
-function applicationDetail(title: string) {
-  return portalApplicationShowcase.find((item) => item.title === title)?.detail ?? "一站式完成任务，快速获得可用成果。";
-}
-
-function capabilityDetail(tone: ManagedCapabilityShowcase["tone"]) {
-  if (tone === "agent") return "构建、编排和运行你的专属智能体";
-  if (tone === "usage") return "RAG 知识库、文档理解、多源数据融合";
-  return "100+ 主流模型接入，智能路由，稳定高效";
 }
 
 const productPaths = [
@@ -1318,16 +1310,14 @@ export default function ModelMarket({ initialContent }: { initialContent?: Porta
             <Tabs.Panel id="popular" className={`portal-app-tab-panel${applicationTab === "popular" ? " is-active" : " is-inactive"}`} shouldForceMount>
               <div className="portal-featured-app-grid">
                 {popularApplications.slice(0, 1).map((app) => (
-                  <PortalLink href={app.href} className="portal-featured-app-card" key={app.title}>
+                  <PortalLink href={app.href} aria-label={app.title} className="portal-featured-app-card" key={app.title}>
                     <ManagedApplicationVisual item={app} fallback={portalApplicationShowcase[0]?.preview ?? "storyboard"} />
-                    <span className="portal-featured-app-copy"><em>热门应用</em><strong>{app.title}</strong><small>{applicationDetail(app.title)}</small><span className="portal-featured-app-cta">立即使用<ChevronRight aria-hidden /></span></span>
                   </PortalLink>
                 ))}
                 <div className="portal-app-support-grid">
                   {popularApplications.slice(1, 5).map((app, index) => (
-                    <PortalLink href={app.href} className="portal-app-support-card" key={app.title}>
+                    <PortalLink href={app.href} aria-label={app.title} className="portal-app-support-card" key={app.title}>
                       <ManagedApplicationVisual item={app} fallback={portalApplicationShowcase[index + 1]?.preview ?? "poster"} />
-                      <span><strong>{app.title}</strong><small>{applicationDetail(app.title)}</small></span>
                     </PortalLink>
                   ))}
                 </div>
@@ -1336,16 +1326,14 @@ export default function ModelMarket({ initialContent }: { initialContent?: Porta
             <Tabs.Panel id="latest" className={`portal-app-tab-panel${applicationTab === "latest" ? " is-active" : " is-inactive"}`} shouldForceMount>
               <div className="portal-featured-app-grid">
                 {latestApplications.slice(0, 1).map((app) => (
-                  <PortalLink href={app.href} className="portal-featured-app-card" key={app.title}>
+                  <PortalLink href={app.href} aria-label={app.title} className="portal-featured-app-card" key={app.title}>
                     <ManagedApplicationVisual item={app} fallback={portalApplicationShowcase[5]?.preview ?? "product"} />
-                    <span className="portal-featured-app-copy"><em>最新上架</em><strong>{app.title}</strong><small>{applicationDetail(app.title)}</small><span className="portal-featured-app-cta">立即使用<ChevronRight aria-hidden /></span></span>
                   </PortalLink>
                 ))}
                 <div className="portal-app-support-grid">
                   {latestApplications.slice(1, 5).map((app, index) => (
-                    <PortalLink href={app.href} className="portal-app-support-card" key={app.title}>
+                    <PortalLink href={app.href} aria-label={app.title} className="portal-app-support-card" key={app.title}>
                       <ManagedApplicationVisual item={app} fallback={portalApplicationShowcase[index + 6]?.preview ?? "finance"} />
-                      <span><strong>{app.title}</strong><small>{applicationDetail(app.title)}</small></span>
                     </PortalLink>
                   ))}
                 </div>
@@ -1355,7 +1343,7 @@ export default function ModelMarket({ initialContent }: { initialContent?: Porta
         </section>
 
         <section className="portal-bottom-explore portal-system-rail">
-          <div className="portal-capability-showcase">{visibleCapabilities.map((card) => <PortalLink href={card.href} className={`portal-capability-hero is-${card.tone}${card.imageUrl ? " has-managed-image" : ""}`} key={card.id}>{card.imageUrl ? <Image className="portal-managed-capability-image" src={card.imageUrl} alt="" fill sizes="(max-width: 760px) 100vw, 34vw" priority unoptimized /> : <CapabilityEvidence kind={card.tone === "agent" ? "agent" : card.tone === "usage" ? "usage" : "models"} />}<span className="portal-capability-copy"><strong>{card.title}</strong><small>{capabilityDetail(card.tone)}</small></span></PortalLink>)}</div>
+          <div className="portal-capability-showcase">{visibleCapabilities.map((card) => <PortalLink href={card.href} aria-label={card.title} className={`portal-capability-hero is-${card.tone}${card.imageUrl ? " has-managed-image" : ""}`} key={card.id}>{card.imageUrl ? <Image className="portal-managed-capability-image" src={card.imageUrl} alt="" fill sizes="(max-width: 760px) 100vw, 34vw" priority unoptimized /> : <CapabilityEvidence kind={card.tone === "agent" ? "agent" : card.tone === "usage" ? "usage" : "models"} />}</PortalLink>)}</div>
           <footer className="portal-bottom-footer"><div className="portal-bottom-brand"><strong><Image className="portal-footer-mark" src="/brand/logo-day.png" alt="" width={26} height={26} unoptimized />REIZO</strong><p>从 AI 能力到智能体，每一步都更简单。</p><small>© 2026 Reizo. All rights reserved.</small></div>{footerColumns.map((group) => <div key={group.title}><h3>{group.title}</h3>{group.items.slice(0, 3).map((item) => <PortalLink href={item.href} key={item.label}>{item.label}</PortalLink>)}</div>)}<div><h3>关注我们</h3><span className="portal-bottom-social">𝕏　in　◉　✉</span></div></footer>
         </section>
 

@@ -81,6 +81,14 @@ describe("homepage API categories", () => {
     expect(source).toContain("portal-capability-hero");
   });
 
+  it("keeps showcase cards image-only while preserving accessible link names", () => {
+    expect(source).not.toContain('className="portal-featured-app-copy"');
+    expect(source).not.toContain('className="portal-capability-copy"');
+    expect(source).not.toContain("<span><strong>{app.title}</strong><small>{applicationDetail(app.title)}</small></span>");
+    expect(source).toContain('aria-label={app.title}');
+    expect(source).toContain('aria-label={card.title}');
+  });
+
   it("keeps the capability cards but removes the redundant exploration and demand prompt", () => {
     expect(source).not.toContain("探索更多 REIZO 能力");
     expect(source).not.toContain("没有找到合适的应用或技能");
