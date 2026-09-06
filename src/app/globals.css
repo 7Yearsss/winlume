@@ -10340,7 +10340,7 @@ body {
    type or switching the information architecture into a mobile layout.
    ======================================================================== */
 :root {
-  --reizo-public-canvas: 1500px;
+  --reizo-public-canvas: 1800px;
   --reizo-font-page: 38px;
   --reizo-font-section: 24px;
   --reizo-font-card: 18px;
@@ -10460,13 +10460,13 @@ body {
 }
 
 .portal-home-dashboard .portal-discovery-grid > .portal-tools-card {
-  grid-column: 2 !important;
+  grid-column: 3 !important;
   grid-row: 1 / 3 !important;
   min-height: 0;
 }
 
 .portal-home-dashboard .portal-discovery-grid > .portal-featured-card {
-  grid-column: 3 !important;
+  grid-column: 2 !important;
   grid-row: 1 !important;
   height: auto !important;
   min-height: 0;
@@ -10475,7 +10475,7 @@ body {
 
 .portal-home-dashboard .portal-discovery-grid > .portal-side-cards {
   display: block !important;
-  grid-column: 3 !important;
+  grid-column: 2 !important;
   grid-row: 2 !important;
   min-height: 0;
   margin-top: 0;
