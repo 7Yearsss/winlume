@@ -11142,3 +11142,213 @@ body {
 .marketing-product-detail .text-xs {
   font-size: var(--reizo-font-meta) !important;
 }
+
+/* Final notebook-density overrides must stay after the fixed-canvas contract. */
+@media (min-width: 761px) and (max-width: 1600px) {
+  :root {
+    --reizo-public-canvas: 1440px;
+    --reizo-font-page: 34px;
+    --reizo-font-section: 22px;
+    --reizo-font-card: 17px;
+    --reizo-font-body: 15px;
+    --reizo-font-control: 14px;
+    --reizo-font-meta: 12px;
+    --reizo-font-micro: 11px;
+    --reizo-font-metric: 25px;
+  }
+
+  .portal-home .portal-frame,
+  .portal-density-shell > .portal-frame,
+  .portal-home-dashboard .portal-frame,
+  .portal-support-density-shell > .portal-frame {
+    padding-right: 28px !important;
+    padding-left: 28px !important;
+  }
+
+  .portal-home .portal-nav {
+    height: 52px !important;
+    min-height: 52px;
+    gap: 16px;
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .portal-home .portal-main-links {
+    gap: 22px;
+  }
+
+  .portal-home .portal-main-links a,
+  .portal-home .portal-user-links a,
+  .portal-home .portal-user-links button {
+    font-size: 14px !important;
+  }
+
+  .portal-home-dashboard {
+    --portal-dashboard-columns: minmax(300px, .9fr) minmax(360px, 1.1fr) minmax(330px, .95fr);
+  }
+
+  .portal-home-dashboard .portal-search-row {
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .portal-home-dashboard .portal-search-card,
+  .portal-home-dashboard .portal-search-aside,
+  .portal-home-dashboard .portal-enterprise-card.portal-search-aside,
+  .portal-home-dashboard .portal-search-waves {
+    height: 254px !important;
+    min-height: 254px;
+  }
+
+  .portal-home-dashboard .portal-discovery-grid {
+    grid-template-rows: 304px 154px !important;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .portal-home-dashboard .portal-tools-grid {
+    gap: 10px;
+  }
+
+  .portal-home-dashboard .portal-tool-card {
+    min-height: 0;
+    padding: 14px;
+  }
+
+  .portal-home .portal-app-showcase-v2 {
+    padding: 12px 20px 20px;
+  }
+
+  .portal-home .portal-app-showcase-v2 .portal-featured-app-grid {
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .portal-home .portal-app-showcase-v2 .portal-featured-app-card {
+    height: 300px !important;
+    min-height: 300px !important;
+  }
+
+  .portal-home .portal-app-showcase-v2 .portal-app-support-grid {
+    height: 300px !important;
+    grid-template-rows: repeat(2, 144px) !important;
+    gap: 12px;
+  }
+
+  .portal-home .portal-app-showcase-v2 .portal-app-support-card {
+    height: 144px !important;
+    min-height: 144px !important;
+  }
+
+  .portal-home .portal-system-rail {
+    padding: 14px 20px 0;
+  }
+
+  .portal-home .portal-capability-showcase {
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .portal-home .portal-capability-hero,
+  .portal-home .portal-capability-hero.is-models {
+    height: 154px !important;
+    min-height: 154px !important;
+    padding: 14px !important;
+  }
+
+  .portal-home .portal-capability-hero strong {
+    font-size: 18px !important;
+    line-height: 24px !important;
+  }
+
+  .portal-home .portal-capability-hero small {
+    font-size: 12px !important;
+    line-height: 17px !important;
+  }
+
+  .portal-home .portal-account-layout {
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 14px;
+    margin-top: 14px;
+  }
+
+  .portal-home .portal-account-side {
+    padding: 12px 10px 10px;
+  }
+
+  .portal-home .portal-account-side-nav a {
+    min-height: 36px;
+    font-size: 14px !important;
+  }
+
+  .portal-home .portal-account-main > * {
+    border-radius: 14px;
+  }
+
+  .studio-sidebar-container {
+    --studio-sidebar-w: 220px;
+  }
+
+  .studio-sidebar-panel {
+    width: var(--studio-sidebar-w);
+    padding: 12px 10px !important;
+  }
+
+  .studio-workspace-tabbar {
+    min-height: 40px;
+    padding: 5px 10px 0 !important;
+  }
+
+  .studio-workspace-tab {
+    width: 118px;
+    min-width: 118px !important;
+    height: 33px !important;
+    padding-left: 11px !important;
+    font-size: 12px;
+  }
+
+  .studio-workspace-tab-add {
+    width: 33px !important;
+    height: 33px !important;
+  }
+
+  .studio-home-utility-group {
+    top: 6px !important;
+    right: 12px !important;
+  }
+
+  .studio-home-return {
+    min-width: 92px;
+    font-size: 12px;
+  }
+
+  .studio-home-hero-inner {
+    padding-right: 24px !important;
+    padding-left: 24px !important;
+    padding-top: 16px !important;
+    padding-bottom: 17vh !important;
+  }
+
+  .composer-reference-surface {
+    border-radius: 20px !important;
+  }
+
+  .composer-editor-row {
+    padding-top: 0.5rem;
+    padding-bottom: 0.25rem;
+  }
+
+  .composer-footer {
+    min-height: 2.8rem;
+    padding: 0.3rem 0.35rem 0.3rem 0.45rem !important;
+  }
+
+  .composer-icon-button {
+    width: 30px;
+    height: 30px;
+  }
+
+  .composer-selected-model {
+    max-width: 15rem;
+  }
+}
