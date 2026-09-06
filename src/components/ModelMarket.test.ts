@@ -89,6 +89,15 @@ describe("homepage API categories", () => {
     expect(source).toContain('aria-label={card.title}');
   });
 
+  it("renders popular and latest applications as separate modules", () => {
+    expect(source).toContain('className="portal-app-showcase portal-app-showcase-v2 portal-app-showcase-popular"');
+    expect(source).toContain('className="portal-app-showcase portal-app-showcase-v2 portal-app-showcase-latest"');
+    expect(source).toContain('id="portal-popular-apps-title">热门应用');
+    expect(source).toContain('id="portal-latest-apps-title">最新上架');
+    expect(source).not.toContain("<Tabs");
+    expect(source).not.toContain("applicationTab");
+  });
+
   it("keeps the capability cards but removes the redundant exploration and demand prompt", () => {
     expect(source).not.toContain("探索更多 REIZO 能力");
     expect(source).not.toContain("没有找到合适的应用或技能");

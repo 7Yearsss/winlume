@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button as HeroButton, Tabs } from "@heroui/react";
+import { Button as HeroButton } from "@heroui/react";
 import { BarChart3, ChevronLeft, ChevronRight, CircleHelp, Code2, Crown, FileImage, LayoutGrid, Search, ArrowUp, Presentation, ShoppingBag, Video } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { useModals } from "@/components/providers";
@@ -700,7 +700,6 @@ export default function ModelMarket({ initialContent }: { initialContent?: Porta
   const managedApplications = initialContent?.applicationShowcase?.length ? initialContent.applicationShowcase : initialManagedApplications;
   const managedCapabilities = initialContent?.capabilityShowcase?.length ? initialContent.capabilityShowcase : initialManagedCapabilities;
   const [featuredPaused, setFeaturedPaused] = useState(false);
-  const [applicationTab, setApplicationTab] = useState<"popular" | "latest">("popular");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [activePathId, setActivePathId] = useState<ProductPath["id"]>("api");
   const [flyAways, setFlyAways] = useState<FlyAway[]>([]);
@@ -1291,55 +1290,46 @@ export default function ModelMarket({ initialContent }: { initialContent?: Porta
           </div>
         </div>
 
-        <section className="portal-app-showcase portal-app-showcase-v2" aria-label="应用工具">
-          <Tabs
-            selectedKey={applicationTab}
-            onSelectionChange={(key) => setApplicationTab(key === "latest" ? "latest" : "popular")}
-            variant="secondary"
-            className="portal-app-tabs"
-          >
-            <div className="portal-app-showcase-head">
-              <Tabs.ListContainer className="portal-app-tabs-list-container">
-                <Tabs.List aria-label="应用工具分组" className="portal-app-tabs-list">
-                  <Tabs.Tab id="popular" className="portal-app-tab" onMouseEnter={() => setApplicationTab("popular")} onFocus={() => setApplicationTab("popular")}>热门应用<Tabs.Indicator /></Tabs.Tab>
-                  <Tabs.Tab id="latest" className="portal-app-tab" onMouseEnter={() => setApplicationTab("latest")} onFocus={() => setApplicationTab("latest")}>最新上架<Tabs.Indicator /></Tabs.Tab>
-                </Tabs.List>
-              </Tabs.ListContainer>
-              <PortalLink href="/products?cate=app" className="portal-arrow-link">查看全部应用</PortalLink>
+        <section className="portal-app-showcase portal-app-showcase-v2 portal-app-showcase-popular" aria-labelledby="portal-popular-apps-title">
+          <div className="portal-app-showcase-head">
+            <h2 id="portal-popular-apps-title">热门应用</h2>
+            <PortalLink href="/products?cate=app" className="portal-arrow-link">查看全部应用</PortalLink>
+          </div>
+          <div className="portal-featured-app-grid">
+            {popularApplications.slice(0, 1).map((app) => (
+              <PortalLink href={app.href} aria-label={app.title} className="portal-featured-app-card" key={app.title}>
+                <ManagedApplicationVisual item={app} fallback={portalApplicationShowcase[0]?.preview ?? "storyboard"} />
+              </PortalLink>
+            ))}
+            <div className="portal-app-support-grid">
+              {popularApplications.slice(1, 5).map((app, index) => (
+                <PortalLink href={app.href} aria-label={app.title} className="portal-app-support-card" key={app.title}>
+                  <ManagedApplicationVisual item={app} fallback={portalApplicationShowcase[index + 1]?.preview ?? "poster"} />
+                </PortalLink>
+              ))}
             </div>
-            <Tabs.Panel id="popular" className={`portal-app-tab-panel${applicationTab === "popular" ? " is-active" : " is-inactive"}`} shouldForceMount>
-              <div className="portal-featured-app-grid">
-                {popularApplications.slice(0, 1).map((app) => (
-                  <PortalLink href={app.href} aria-label={app.title} className="portal-featured-app-card" key={app.title}>
-                    <ManagedApplicationVisual item={app} fallback={portalApplicationShowcase[0]?.preview ?? "storyboard"} />
-                  </PortalLink>
-                ))}
-                <div className="portal-app-support-grid">
-                  {popularApplications.slice(1, 5).map((app, index) => (
-                    <PortalLink href={app.href} aria-label={app.title} className="portal-app-support-card" key={app.title}>
-                      <ManagedApplicationVisual item={app} fallback={portalApplicationShowcase[index + 1]?.preview ?? "poster"} />
-                    </PortalLink>
-                  ))}
-                </div>
-              </div>
-            </Tabs.Panel>
-            <Tabs.Panel id="latest" className={`portal-app-tab-panel${applicationTab === "latest" ? " is-active" : " is-inactive"}`} shouldForceMount>
-              <div className="portal-featured-app-grid">
-                {latestApplications.slice(0, 1).map((app) => (
-                  <PortalLink href={app.href} aria-label={app.title} className="portal-featured-app-card" key={app.title}>
-                    <ManagedApplicationVisual item={app} fallback={portalApplicationShowcase[5]?.preview ?? "product"} />
-                  </PortalLink>
-                ))}
-                <div className="portal-app-support-grid">
-                  {latestApplications.slice(1, 5).map((app, index) => (
-                    <PortalLink href={app.href} aria-label={app.title} className="portal-app-support-card" key={app.title}>
-                      <ManagedApplicationVisual item={app} fallback={portalApplicationShowcase[index + 6]?.preview ?? "finance"} />
-                    </PortalLink>
-                  ))}
-                </div>
-              </div>
-            </Tabs.Panel>
-          </Tabs>
+          </div>
+        </section>
+
+        <section className="portal-app-showcase portal-app-showcase-v2 portal-app-showcase-latest" aria-labelledby="portal-latest-apps-title">
+          <div className="portal-app-showcase-head">
+            <h2 id="portal-latest-apps-title">最新上架</h2>
+            <PortalLink href="/products?cate=app" className="portal-arrow-link">查看全部应用</PortalLink>
+          </div>
+          <div className="portal-featured-app-grid">
+            {latestApplications.slice(0, 1).map((app) => (
+              <PortalLink href={app.href} aria-label={app.title} className="portal-featured-app-card" key={app.title}>
+                <ManagedApplicationVisual item={app} fallback={portalApplicationShowcase[5]?.preview ?? "product"} />
+              </PortalLink>
+            ))}
+            <div className="portal-app-support-grid">
+              {latestApplications.slice(1, 5).map((app, index) => (
+                <PortalLink href={app.href} aria-label={app.title} className="portal-app-support-card" key={app.title}>
+                  <ManagedApplicationVisual item={app} fallback={portalApplicationShowcase[index + 6]?.preview ?? "finance"} />
+                </PortalLink>
+              ))}
+            </div>
+          </div>
         </section>
 
         <section className="portal-bottom-explore portal-system-rail">

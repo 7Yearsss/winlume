@@ -10807,6 +10807,23 @@ body {
   margin-top: 3px;
 }
 
+/* Popular and latest applications are independent image galleries. */
+.portal-home .portal-app-showcase-v2 + .portal-app-showcase-v2 {
+  margin-top: 18px;
+}
+
+.portal-home .portal-app-showcase-v2 .portal-app-showcase-head h2 {
+  margin: 0;
+  color: #1b2a42;
+  font-size: var(--reizo-font-section) !important;
+  font-weight: 700;
+  line-height: 31px !important;
+}
+
+.portal-home .portal-app-showcase-v2 .portal-featured-app-grid {
+  margin-top: 18px;
+}
+
 /* Showcase cards are image-led; do not tint the artwork for removed overlays. */
 .portal-home .portal-featured-app-card::after,
 .portal-home .portal-app-support-card::after,
