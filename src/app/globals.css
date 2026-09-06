@@ -8880,6 +8880,142 @@ html[data-studio-theme="dark"] .studio-account-trigger[data-state="open"] {
   color: #a3a3a3;
 }
 
+/* Workbench chrome follows a browser-like top strip: wide tabs, a clear
+   active edge, and utility controls aligned with the strip itself. */
+.studio-workspace-tabbar {
+  min-height: 46px;
+  align-items: flex-end !important;
+  gap: 3px !important;
+  padding: 6px 12px 0 !important;
+  border-bottom: 1px solid #2a2a2a !important;
+  background: #0d0d0d;
+}
+
+.studio-workspace-tab {
+  position: relative;
+  width: 132px;
+  min-width: 132px !important;
+  height: 38px !important;
+  box-sizing: border-box;
+  align-items: center;
+  padding: 0 8px 0 14px !important;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0 !important;
+  color: #8a8a8a;
+  background: transparent !important;
+  font-size: 13px;
+}
+
+.studio-workspace-tab[data-active="true"] {
+  border-color: #2a2a2a;
+  border-bottom-color: #161616;
+  background: #161616 !important;
+  color: #f4f4f4;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.studio-workspace-tab[data-active="false"]:hover {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: #151515 !important;
+  color: #d6d6d6;
+}
+
+.studio-workspace-tab-add {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 10px 10px 0 0 !important;
+  color: #8a8a8a;
+}
+
+.studio-workspace-tab-add:hover {
+  background: #1c1c1c !important;
+  color: #f4f4f4;
+}
+
+.studio-home-utility-group {
+  position: fixed !important;
+  top: 8px !important;
+  right: 18px !important;
+  z-index: 60 !important;
+}
+
+.studio-home-return {
+  width: auto !important;
+  min-width: 104px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 550;
+}
+
+.studio-home-utility-label {
+  white-space: nowrap;
+}
+
+.studio-root[data-theme="dark"] .studio-brand-wordmark {
+  color: #f4f4f4 !important;
+}
+
+.studio-root[data-theme="dark"] .studio-workspace-tabbar {
+  border-bottom-color: #2a2a2a !important;
+  background: #0d0d0d;
+}
+
+.studio-root:not([data-theme="dark"]) .studio-workspace-tabbar {
+  border-bottom-color: #dfe5ed !important;
+  background: #eef2f7;
+}
+
+.studio-root:not([data-theme="dark"]) .studio-workspace-tab {
+  color: #64748b;
+}
+
+.studio-root:not([data-theme="dark"]) .studio-workspace-tab[data-active="true"] {
+  border-color: #dfe6ef;
+  border-bottom-color: #fff;
+  background: #fff !important;
+  color: #172033;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.studio-root:not([data-theme="dark"]) .studio-workspace-tab[data-active="false"]:hover {
+  border-color: #e3e8ef;
+  background: #f7f9fc !important;
+  color: #172033;
+}
+
+.studio-root:not([data-theme="dark"]) .studio-home-utility-group {
+  top: 8px !important;
+  right: 18px !important;
+}
+
+@media (max-width: 720px) {
+  .studio-workspace-tabbar {
+    padding-right: 8px !important;
+    padding-left: 8px !important;
+  }
+
+  .studio-workspace-tab {
+    width: 124px;
+    min-width: 124px !important;
+  }
+
+  .studio-home-utility-group {
+    top: 8px !important;
+    right: 10px !important;
+  }
+
+  .studio-home-return {
+    min-width: 38px;
+    padding-right: 10px !important;
+    padding-left: 10px !important;
+  }
+
+  .studio-home-utility-label {
+    display: none;
+  }
+}
+
 .studio-root[data-theme="dark"] .studio-home-intro h1,
 .studio-root[data-theme="dark"] .studio-home-capabilities h2,
 .studio-root[data-theme="dark"] .studio-home-capabilities h3 {

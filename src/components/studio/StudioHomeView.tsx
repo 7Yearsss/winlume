@@ -508,7 +508,7 @@ function StudioHomeInner({ active, tabId }: { active: boolean; tabId: string }) 
     >
       {/* Compact utility controls keep the canvas focused on the prompt. */}
       <div
-        className={`pointer-events-none absolute right-5 top-4 z-[2] flex items-center gap-2 sm:right-8 sm:top-5 transition-opacity duration-200 ${
+        className={`studio-home-utility-group pointer-events-none absolute right-5 top-4 z-[2] flex items-center gap-2 sm:right-8 sm:top-5 transition-opacity duration-200 ${
           docking ? "opacity-0" : "opacity-100"
         }`}
       >
@@ -516,9 +516,10 @@ function StudioHomeInner({ active, tabId }: { active: boolean; tabId: string }) 
           href="/"
           title="返回首页"
           aria-label="返回首页"
-          className="studio-home-utility pointer-events-auto inline-flex h-9 w-9 items-center justify-center transition-[background-color,color,transform] duration-150 active:scale-[0.98] focus-visible:outline-none"
+          className="studio-home-utility studio-home-return pointer-events-auto inline-flex h-9 items-center justify-center gap-1.5 px-3 transition-[background-color,color,transform] duration-150 active:scale-[0.98] focus-visible:outline-none"
         >
           <ArrowLeft className="h-4 w-4" strokeWidth={1.8} />
+          <span className="studio-home-utility-label">返回首页</span>
         </Link>
         <span
           className="studio-home-utility pointer-events-auto flex h-9 w-9 items-center justify-center"

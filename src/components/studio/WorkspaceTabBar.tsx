@@ -57,7 +57,8 @@ export default function WorkspaceTabBar() {
         return (
           <div
             key={tab.id}
-            className={`group flex h-8 min-w-0 max-w-[200px] shrink-0 items-center gap-1.5 rounded-[9px] pl-3 pr-1.5 text-[13px] transition ${
+            data-active={isActive ? "true" : "false"}
+            className={`studio-workspace-tab group flex h-8 min-w-0 max-w-[200px] shrink-0 items-center gap-1.5 rounded-[9px] pl-3 pr-1.5 text-[13px] transition ${
               isActive
                 ? "bg-white/85 text-[#241E36] shadow-sm"
                 : "text-[#8A8298] hover:bg-white/50 hover:text-[#615A73]"
@@ -119,7 +120,7 @@ export default function WorkspaceTabBar() {
         onClick={openHomeTab}
         title="开始创作"
         aria-label="新建标签"
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] text-[#8A8298] transition hover:bg-white/60 hover:text-[#241E36]"
+        className="studio-workspace-tab-add flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] text-[#8A8298] transition hover:bg-white/60 hover:text-[#241E36]"
       >
         <Plus className="h-4 w-4" />
       </button>
