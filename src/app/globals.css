@@ -11381,6 +11381,8 @@ body {
 }
 
 .portal-home-dashboard .portal-usage-heading > .portal-arrow-link {
+  position: static;
+  inset: auto;
   flex-shrink: 0;
   white-space: nowrap;
 }
