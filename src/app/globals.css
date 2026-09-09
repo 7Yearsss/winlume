@@ -11201,7 +11201,7 @@ body {
   }
 
   .portal-home-dashboard .portal-discovery-grid {
-    grid-template-rows: 304px 154px !important;
+    grid-template-rows: 344px 178px !important;
     gap: 12px;
     margin-top: 16px;
   }
