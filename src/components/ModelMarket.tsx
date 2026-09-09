@@ -1279,13 +1279,15 @@ export default function ModelMarket({ initialContent }: { initialContent?: Porta
                 }
               }}
             >
-              <div className="portal-card-heading"><Image src="/figma-home/usage-icon.svg" alt="" width={20} height={20} /><h2 id="portal-usage-title">账户概览</h2></div>
+              <div className="portal-usage-heading">
+                <div className="portal-card-heading"><Image src="/figma-home/usage-icon.svg" alt="" width={20} height={20} /><h2 id="portal-usage-title">账户概览</h2></div>
+                <Link href="/account" className="portal-arrow-link" onClick={(event) => event.stopPropagation()}>进入个人中心<ChevronRight aria-hidden /></Link>
+              </div>
               <div className="portal-usage-stats">
                 <div><span>余额</span><strong>{balance === "余额同步中" ? "—" : balance}</strong></div>
                 <div><span>已消耗 Token</span><strong>{usedCredits != null ? fmtUsage(usedCredits) : "—"}</strong></div>
                 <div className="portal-membership-quota"><span><em>Free</em>会员剩余额度</span><strong>{quotaPct != null ? `${quotaPct}%` : "—"}</strong></div>
               </div>
-              <Link href="/account" className="portal-arrow-link" onClick={(event) => event.stopPropagation()}>进入个人中心<ChevronRight aria-hidden /></Link>
             </section>
           </div>
         </div>
