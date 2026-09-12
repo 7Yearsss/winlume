@@ -84,6 +84,11 @@ jobs:
           set -euo pipefail
           # Brand cutover: stop both old WinLume and new Reizo units so port
           # 3001 is free and we never run two generations at once.
+          # Validate protected environment access before stopping the running app.
+          if sudo -n test -f /etc/reizo/web.env; then
+            sudo -n chown "$(id -u):$(id -g)" /etc/reizo/web.env
+            test -r /etc/reizo/web.env
+          fi
           sudo -n systemctl stop reizo || true
           sudo -n systemctl stop winlume || true
 

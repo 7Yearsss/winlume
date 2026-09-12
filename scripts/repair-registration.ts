@@ -1,5 +1,5 @@
 /** Run only on the application host. Never prints credentials or user input. */
-import { readFileSync, writeFileSync, renameSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, renameSync, mkdirSync, statSync, chownSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 import { requirePlatformDb } from "../src/lib/platform/db/client";
@@ -39,6 +39,10 @@ async function main() {
   const next = previous.split(/\r?\n/).filter(line => !/^\s*(?:export\s+)?NEW_API_ADMIN_TOKEN\s*=/.test(line)).join("\n").trimEnd() + `\nNEW_API_ADMIN_TOKEN='${token}'\n`;
   writeFileSync(path + ".registration-backup", previous, { mode: 0o600 });
   writeFileSync(path + ".registration-tmp", next, { mode: 0o600 });
+  try {
+    const owner = statSync(path);
+    chownSync(path + ".registration-tmp", owner.uid, owner.gid);
+  } catch (error: any) { if (error.code !== "ENOENT") throw error; }
   renameSync(path + ".registration-tmp", path);
   process.env.NEW_API_ADMIN_TOKEN = token;
   console.log("Administrator environment repaired; previous configuration retained securely on host");

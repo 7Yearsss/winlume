@@ -1,0 +1,36 @@
+name: Recover prepared web release
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Finish migrations and restart prepared release
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > ~/.ssh/key
+          chmod 600 ~/.ssh/key
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          ssh -i ~/.ssh/key "$DEPLOY_USER@$DEPLOY_HOST" 'sudo -n chown "$(id -u):$(id -g)" /etc/reizo/web.env; sudo -n bash -s' <<'REMOTE'
+          set -eu
+          cd /opt/reizo
+          set -a
+          . ./.env
+          . /etc/reizo/web.env
+          set +a
+          node scripts/db-migrate.mjs
+          systemctl restart reizo
+          for i in $(seq 1 30); do
+            if curl -fsS -o /dev/null http://127.0.0.1:3001/studio; then
+              systemctl is-active reizo
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
+          REMOTE
