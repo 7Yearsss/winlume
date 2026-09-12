@@ -269,18 +269,17 @@ export default function ConsoleKeysContent() {
   const [revoking, setRevoking] = useState<string | null>(null);
   const [batchRevoking, setBatchRevoking] = useState(false);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [keyStats, setKeyStats] = useState({ active: 0, expiringSoon: 0, revoked: 0 });
+  const applyKeys = setKeys;
   const [importing, setImporting] = useState(false);
   const [studioStatus, setStudioStatus] = useState("unknown");
   const [notice, setNotice] = useState("");
 
-  function applyKeys(next: ConsoleApiKey[]) {
-    setKeys(next);
+  const keyStats = useMemo(() => {
     const soon = Date.now() + 30 * 24 * 60 * 60 * 1000;
     let active = 0;
     let expiringSoon = 0;
     let revoked = 0;
-    for (const key of next) {
+    for (const key of keys) {
       if (key.status === "active") {
         active += 1;
         if (key.expiresAt && new Date(key.expiresAt).getTime() <= soon) expiringSoon += 1;
@@ -288,8 +287,8 @@ export default function ConsoleKeysContent() {
         revoked += 1;
       }
     }
-    setKeyStats({ active, expiringSoon, revoked });
-  }
+    return { active, expiringSoon, revoked };
+  }, [keys]);
 
   const load = useCallback(async (nextOrganizationId?: string | null) => {
     setLoading(true);
@@ -333,7 +332,7 @@ export default function ConsoleKeysContent() {
     setRevoking(key.id);
     try {
       const result = await revokeConsoleKey(key.id);
-      applyKeys(keys.map((item) => item.id === result.key.id ? result.key : item));
+      applyKeys(current => current.map((item) => item.id === result.key.id ? result.key : item));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "撤销失败，请重试。");
     } finally {
@@ -345,7 +344,7 @@ export default function ConsoleKeysContent() {
     setRevoking(key.id);
     try {
       const result = await setConsoleKeyEnabled(key.id, key.status === "disabled");
-      applyKeys(keys.map(item => item.id === key.id ? result.key : item));
+      applyKeys(current => current.map(item => item.id === key.id ? result.key : item));
     } catch (reason) { setError(reason instanceof Error ? reason.message : "密钥状态更新失败。"); }
     finally { setRevoking(null); }
   }
@@ -366,7 +365,7 @@ export default function ConsoleKeysContent() {
         else failures += 1;
       });
       if (revoked.size > 0) {
-        applyKeys(keys.map((item) => revoked.get(item.id) ?? item));
+        applyKeys(current => current.map((item) => revoked.get(item.id) ?? item));
       }
       if (failures > 0) setError(`${failures} 个 Key 撤销失败，请重试。`);
       setRowSelection({});
@@ -596,13 +595,13 @@ export default function ConsoleKeysContent() {
           existing={editing}
           onClose={() => { setShowDialog(false); setEditing(null); }}
           onCreated={(key, secret) => {
-            applyKeys([key, ...keys]);
+            applyKeys(current => [key, ...current]);
             setRevealed(secret);
             setShowDialog(false);
             setEditing(null);
           }}
           onUpdated={(key) => {
-            applyKeys(keys.map((item) => item.id === key.id ? key : item));
+            applyKeys(current => current.map((item) => item.id === key.id ? key : item));
             setShowDialog(false);
             setEditing(null);
           }}
