@@ -15,6 +15,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
       let body = {sessions:[],projects:[],skills:[],models:[],data:[]};
       if(path==='/api/account/self') body={success:true,data:{id:'new-user',username:'new-user'}};
       if(path==='/api/account/config') body={success:true,data:{}};
+      if(path==='/api/capabilities') body={models:['gpt-6-astra','gpt-5.5','gpt-image-2.5'],capabilities:[{id:'chat',availability:'available'},{id:'image.generate',availability:'available'}]};
       await route.fulfill({json:body});
     });
     for (const model of ['gpt-6-astra','gpt-5.5','gpt-image-2.5']) {

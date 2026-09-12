@@ -1731,7 +1731,7 @@ export default function Composer({
         setSelectedIds([]);
         setTurnTool(null);
         setTurnToolParams({});
-        setComposerMode("chat");
+        setComposerMode(isImageGenerationModel(model) ? "image" : "chat");
         onCapabilityPresetChange?.(null);
         clearAttachments();
         closeMenu();
