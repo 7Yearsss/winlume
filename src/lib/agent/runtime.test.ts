@@ -30,6 +30,43 @@ vi.mock("@/lib/agent/provider/gateway", async (importOriginal) => {
 describe("runAgentTurn chunk mapping", () => {
   const directories: string[] = [];
 
+  it("sends selected image models directly to Images API and persists linked results", async () => {
+    const root=mkdtempSync(join(tmpdir(),"reizo-direct-image-")); directories.push(root);
+    const store=createWebFileStore(root);
+    await store.sessions.createSession({id:"image-session",userId:"user-1",title:"新对话",model:"gpt-image-2.5"});
+    await store.artifacts.write({id:"reference",userId:"user-1",sessionId:"image-session",name:"参考图",kind:"image",mimeType:"image/png",storageKey:"",status:"ready",createdAt:new Date().toISOString()},Buffer.from("reference-png"));
+    gatewayMocks.generateImage.mockResolvedValue([{bytes:Buffer.from("png"),mimeType:"image/png"}]);
+    const chat=vi.fn(async function* () { throw new Error("Image must not reach chat transport"); });
+    const events=[];
+    for await(const event of runAgentTurn({userId:"user-1",sessionId:"image-session",userText:"画一只猫",referencedArtifactIds:["reference"],metadata:{composerOptions:{mode:"image",size:"1536x1024",count:1}},sessions:store.sessions,artifacts:store.artifacts,streamChat:chat})) events.push(event);
+    expect(chat).not.toHaveBeenCalled();
+    await vi.waitFor(async()=>expect((await store.artifacts.listBySession("user-1","image-session")).find(a=>a.id!=="reference")?.status).toBe("ready"));
+    expect(gatewayMocks.generateImage).toHaveBeenCalledWith(expect.objectContaining({model:"gpt-image-2.5",token:"sk-test-studio",size:"1536x1024",sourceImages:[{bytes:Buffer.from("reference-png"),mimeType:"image/png"}],prompt:expect.stringContaining("画一只猫")}));
+    const artifact=(await store.artifacts.listBySession("user-1","image-session")).find(a=>a.id!=="reference")!;
+    const messages=await store.sessions.listMessages("user-1","image-session");
+    expect(messages.some(m=>m.id===artifact.messageId && m.role==="assistant")).toBe(true);
+    expect(events).toContainEqual(expect.objectContaining({type:"artifact",kind:"image"}));
+  });
+
+  it("retains image generation failures on the artifact for retry and display", async () => {
+    const root=mkdtempSync(join(tmpdir(),"reizo-direct-image-error-")); directories.push(root);
+    const store=createWebFileStore(root);
+    await store.sessions.createSession({id:"image-session",userId:"user-1",title:"新对话",model:"gpt-image-2"});
+    gatewayMocks.generateImage.mockRejectedValue(new Error("图片渠道暂不可用"));
+    for await(const _ of runAgentTurn({userId:"user-1",sessionId:"image-session",userText:"画一只猫",sessions:store.sessions,artifacts:store.artifacts})) { /* consume */ }
+    await vi.waitFor(async()=>expect((await store.artifacts.listBySession("user-1","image-session"))[0]).toMatchObject({status:"failed",error:"图片渠道暂不可用"}));
+  });
+
+  it("does not call image generation with an inaccessible reference image", async () => {
+    const root=mkdtempSync(join(tmpdir(),"reizo-image-access-")); directories.push(root);
+    const store=createWebFileStore(root);
+    await store.sessions.createSession({id:"image-session",userId:"user-1",title:"新对话",model:"gpt-image-2"});
+    const events=[];
+    for await(const event of runAgentTurn({userId:"user-1",sessionId:"image-session",userText:"修改这张图",referencedArtifactIds:["foreign-image"],sessions:store.sessions,artifacts:store.artifacts})) events.push(event);
+    expect(gatewayMocks.generateImage).not.toHaveBeenCalled();
+    expect(events).toContainEqual(expect.objectContaining({type:"error",code:"image_generation_failed"}));
+  });
+
   afterEach(() => {
     for (const directory of directories) {
       rmSync(directory, { recursive: true, force: true });

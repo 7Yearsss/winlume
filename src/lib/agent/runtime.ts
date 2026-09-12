@@ -4,6 +4,7 @@
  */
 
 import { randomUUID } from "node:crypto";
+import { isImageGenerationModel } from "@/lib/studio/image-model";
 import type {
   AgentSseEvent,
   Artifact,
@@ -465,6 +466,43 @@ export async function* runAgentTurn(
   }
 
   yield { type: "session", sessionId };
+
+  // Image models speak the Images API, not Chat Completions or tool calling.
+  // Keep the normal run/session event contract so artifacts survive navigation.
+  if (isImageGenerationModel(model)) {
+    if (opts.allowedToolNames && !opts.allowedToolNames.includes("generate_image")) {
+      yield { type: "error", message: "请切换到图片模式后使用此模型。", code: "image_mode_required" };
+      yield { type: "done", reason: "error" };
+      return;
+    }
+    const messageId = randomUUID();
+    const callId = randomUUID();
+    const sourceIds = [...new Set([...(opts.referencedArtifactIds ?? []), ...(opts.referencedArtifactId ? [opts.referencedArtifactId] : [])])];
+    const input = applyComposerGenerationOptions("generate_image", {
+      name: "生成图片", prompt: userText, model, size: "1024x1024", count: 1,
+      ...(sourceIds.length ? { sourceArtifactIds: sourceIds } : {}),
+    }, opts.metadata?.composerOptions);
+    await sessions.appendMessages(userId, sessionId, [{
+      id: messageId, sessionId, role: "assistant", content: "正在提交图片生成任务。",
+      toolCalls: [{ id: callId, name: "generate_image", arguments: JSON.stringify(input) }],
+      metadata: { model }, createdAt: nowIso(),
+    }]);
+    yield { type: "message_start", messageId };
+    yield { type: "text_delta", text: "正在提交图片生成任务。" };
+    yield { type: "tool_call", id: callId, name: "generate_image", input };
+    const result = await executeStudioTool("generate_image", JSON.stringify(input), {
+      userId, sessionId, projectId, runId: opts.runId, artifacts, messageId, userIntent: userText,
+    });
+    await sessions.appendMessages(userId, sessionId, [{
+      id: randomUUID(), sessionId, role: "tool", toolCallId: callId,
+      content: result.content, createdAt: nowIso(),
+    }]);
+    yield { type: "tool_result", id: callId, ok: result.ok, summary: result.ok ? "图片生成任务已提交" : result.summary };
+    for (const event of result.events ?? []) yield event;
+    if (!result.ok) yield { type: "error", message: result.summary, code: "image_generation_failed" };
+    yield { type: "done", reason: result.ok ? "completed" : "error" };
+    return;
+  }
 
   const effectiveSkillIds = selectRuntimeSkillIds(
     [...(project?.pinnedSkillIds ?? []), ...(session.pinnedSkillIds ?? [])],

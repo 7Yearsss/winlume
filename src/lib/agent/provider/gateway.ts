@@ -487,7 +487,7 @@ async function resolveGeneratedImage(
     return { bytes: Buffer.from(item.b64_json, "base64"), mimeType: "image/png" };
   }
   if (item.url) {
-    const res = await fetchImpl(item.url);
+    const res = await fetchImpl(item.url, { signal: AbortSignal.timeout(30_000) });
     if (!res.ok) {
       throw new Error(`Failed to download generated image (${res.status})`);
     }
@@ -553,7 +553,7 @@ export async function generateImage(
     });
   }
 
-  const response = await fetchImpl(url, { method: "POST", headers, body });
+  const response = await fetchImpl(url, { method: "POST", headers, body, signal: AbortSignal.timeout(300_000) });
   const text = await response.text();
   if (!response.ok) {
     throw new Error(errorMessageFromBody(text, response.status));

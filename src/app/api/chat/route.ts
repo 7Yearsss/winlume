@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { NextRequest } from "next/server";
+import { isImageGenerationModel } from "@/lib/studio/image-model";
 import { UI_MESSAGE_STREAM_HEADERS } from "ai";
 import { getCurrentUserId } from "@/lib/auth/session";
 import type { AgentSseEvent } from "@/lib/agent/types";
@@ -272,7 +273,7 @@ export async function POST(request: NextRequest) {
         ...(idempotencyKey ? { idempotencyKey } : {}),
         input: {
           message,
-          executionMode,
+          executionMode: isImageGenerationModel(model) ? "studio" : executionMode,
           model,
           ...(allowedToolNames ? { allowedToolNames: [...allowedToolNames] } : {}),
           ...(skillIds?.length ? { skillIds } : {}),

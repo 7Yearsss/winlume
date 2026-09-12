@@ -1,4 +1,5 @@
 "use client";
+import { isImageGenerationModel } from "@/lib/studio/image-model";
 
 import Link from "next/link";
 import { BorderBeam } from "border-beam";
@@ -521,7 +522,7 @@ export default function Composer({
   const [modelsLoading, setModelsLoading] = useState(true);
   const [customMode, setCustomMode] = useState(false);
   const [composerMode, setComposerMode] = useState<ComposerMode>(() =>
-    modeForCapabilityPreset(capabilityPresetId),
+    isImageGenerationModel(model) ? "image" : modeForCapabilityPreset(capabilityPresetId),
   );
   const [imageSize, setImageSize] = useState<ImageSize>("1024x1024");
   const [imageCount, setImageCount] = useState<1 | 2 | 3 | 4>(1);
@@ -580,8 +581,8 @@ export default function Composer({
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- capability launch intent is an external prop.
-    setComposerMode(modeForCapabilityPreset(capabilityPresetId));
-  }, [capabilityPresetId]);
+    setComposerMode(isImageGenerationModel(model) ? "image" : modeForCapabilityPreset(capabilityPresetId));
+  }, [capabilityPresetId, model]);
 
   const isControlled = controlledValue !== undefined;
   const draft = isControlled ? controlledValue : uncontrolled;
