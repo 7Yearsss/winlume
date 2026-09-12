@@ -1091,7 +1091,7 @@ export default function ModelMarket({ initialContent }: { initialContent?: Porta
             <div className="portal-tools-head">
               <h2 id="portal-tools-title">应用工具</h2>
               <div className="portal-tools-head-actions">
-                <div className="portal-tools-proof" aria-label="平台能力规模"><span><strong>300+</strong> 应用</span><i aria-hidden /><span><strong>2600+</strong> Skills</span></div>
+                <div className="portal-tools-proof" aria-label="平台能力规模"><span className="portal-api-billing-badge">300+ 应用</span><span className="portal-api-billing-badge">2600+ Skills</span></div>
                 <ArrowLink href="/products?cate=app">查看全部工具</ArrowLink>
               </div>
             </div>
