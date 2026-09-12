@@ -19,7 +19,8 @@ jobs:
           ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
           ssh -i ~/.ssh/key -o BatchMode=yes -o IdentitiesOnly=yes "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
           sudo -n systemctl is-active reizo
-          sudo -n journalctl -u reizo --since '2 hours ago' --no-pager -o cat | python3 -c '
+          sudo -n systemctl show reizo -p StandardOutput -p StandardError
+          { sudo -n journalctl -u reizo --since '2 hours ago' --no-pager -o cat; sudo -n tail -300 /var/log/reizo.log 2>/dev/null || true; } | python3 -c '
           import sys,re
           patterns = ["Console request failed", "no linked new-api", "new-api token was", "NewApiTeamError", "new-api returned", "violates", "does not exist", "invalid input syntax", "authentication tag", "Unsupported state", "code:"]
           for line in sys.stdin:
