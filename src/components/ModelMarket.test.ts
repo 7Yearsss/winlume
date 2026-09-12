@@ -8,6 +8,7 @@ import { join } from "node:path";
  */
 describe("homepage API categories", () => {
   const source = readFileSync(join(__dirname, "ModelMarket.tsx"), "utf8");
+  const categories = readFileSync(join(__dirname, "../lib/portal/homepage-vendors.ts"), "utf8");
 
   it("lists marketplace-style categories and no popular-models block", () => {
     for (const label of [
@@ -18,7 +19,7 @@ describe("homepage API categories", () => {
       "RAG知识库",
       "信息检索",
     ]) {
-      expect(source).toContain(`label: "${label}"`);
+      expect(categories).toContain(`label: "${label}"`);
     }
     expect(source).not.toContain("常用模型");
     expect(source).not.toContain("popularModels");
@@ -27,9 +28,7 @@ describe("homepage API categories", () => {
   it("renders brand chips without 通用接口 and exposes the supplier flyout", () => {
     expect(source).toContain("portal-api-brands");
     expect(source).toContain("portal-api-brand");
-    expect(source).toContain('apiProvider("OpenAI"');
-    expect(source).toContain('apiProvider("Anthropic"');
-    expect(source).toContain('apiProvider("Jina AI"');
+    expect(source).toContain("homepageApiCategories(initialContent?.modelVendors ?? [])");
     expect(source).not.toMatch(/label:\s*"通用接口"/);
     expect(source).toContain("portal-api-touch-card");
   });
@@ -89,11 +88,11 @@ describe("homepage API categories", () => {
     expect(source).toContain('aria-label={card.title}');
   });
 
-  it("renders popular and latest applications as separate modules", () => {
+  it("renders popular applications while latest is hidden", () => {
     expect(source).toContain('className="portal-app-showcase portal-app-showcase-v2 portal-app-showcase-popular"');
-    expect(source).toContain('className="portal-app-showcase portal-app-showcase-v2 portal-app-showcase-latest"');
+    expect(source).not.toContain('className="portal-app-showcase portal-app-showcase-v2 portal-app-showcase-latest"');
     expect(source).toContain('id="portal-popular-apps-title">热门应用');
-    expect(source).toContain('id="portal-latest-apps-title">最新上架');
+    expect(source).not.toContain('id="portal-latest-apps-title">最新上架');
     expect(source).not.toContain("<Tabs");
     expect(source).not.toContain("applicationTab");
   });

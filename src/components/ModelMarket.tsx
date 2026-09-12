@@ -11,7 +11,7 @@ import PortalHeader from "@/components/PortalHeader";
 import { formatBalance } from "@/lib/account";
 import { getConsoleOverview } from "@/lib/console/client";
 import type { ConsoleOverview } from "@/lib/console/types";
-import { getVendorByKey } from "@/lib/catalog/vendors";
+import { homepageApiCategories } from "@/lib/portal/homepage-vendors";
 import { WORK_SCENES, type WorkSceneId } from "@/lib/studio/work-scenes";
 import { usePortalCanvasScale } from "@/components/usePortalCanvasScale";
 import type { PortalContentConfig } from "@/lib/portal/content-config";
@@ -111,30 +111,6 @@ function PortalLink({ href, children, className, onClick, tabIndex, target = "_b
   );
 }
 
-type ApiBrandLink = {
-  label: string;
-  href: string;
-  icon: string;
-  description: string;
-};
-
-type ApiCategory = {
-  id: string;
-  label: string;
-  icon: string;
-  /** Inline brand / product chips (302-style row) */
-  brands: readonly ApiBrandLink[];
-  /** Fallback when brands empty — full category entry */
-  href: string;
-};
-
-const apiProvider = (label: string, key: string, description: string): ApiBrandLink => ({
-  label,
-  icon: getVendorByKey(key).logo,
-  description,
-  href: `/products?cate=api&brand=${encodeURIComponent(key)}`,
-});
-
 const searchSuggestions = [
   { label: "产品图生成", icon: FileImage, category: "视觉与媒体" },
   { label: "短视频创作", icon: Video, category: "视觉与媒体" },
@@ -163,78 +139,6 @@ const FEATURED_SLIDES: FeaturedSlide[] = [
 ] as const;
 
 const FEATURED_AUTO_MS = 5000;
-
-/** Homepage API categories. Expanded cards deliberately expose real vendor choices. */
-const apiCategories: readonly ApiCategory[] = [
-  {
-    id: "llm",
-    label: "语言推理",
-    icon: "/figma-home/icon-chat.svg",
-    href: "/products?cate=api",
-    brands: [
-      apiProvider("OpenAI", "openai", "GPT 与多模态通用模型"), apiProvider("Anthropic", "anthropic", "Claude 长文本与推理模型"),
-      apiProvider("Gemini", "google", "Google 多模态模型"), apiProvider("Grok", "xai", "xAI 实时推理模型"),
-      apiProvider("通义千问", "alibaba", "阿里云 Qwen 系列"), apiProvider("DeepSeek", "deepseek", "推理与代码模型"),
-      apiProvider("智谱清言", "zhipu", "GLM 中文大模型"), apiProvider("Kimi", "moonshot", "长上下文模型"),
-      apiProvider("豆包", "bytedance", "字节通用模型"), apiProvider("腾讯混元", "tencent", "腾讯多模态模型"),
-      apiProvider("文心", "baidu", "百度 ERNIE 模型"), apiProvider("百川", "baichuan", "百川通用模型"),
-    ],
-  },
-  {
-    id: "image-processing",
-    label: "图像处理",
-    icon: "/figma-home/icon-image.svg",
-    href: "/products?cate=api",
-    brands: [
-      apiProvider("OpenAI", "openai", "DALL·E 图像生成"), apiProvider("FLUX", "black-forest", "高质量文生图模型"),
-      apiProvider("Stability AI", "stability", "Stable Diffusion 系列"), apiProvider("Gemini", "google", "Imagen 图像生成"),
-      apiProvider("阶跃星辰", "stepfun", "图像与视觉理解"), apiProvider("腾讯混元", "tencent", "混元图像创作"),
-    ],
-  },
-  {
-    id: "video",
-    label: "视频处理",
-    icon: "/figma-home/icon-video.svg",
-    href: "/products?cate=api",
-    brands: [
-      apiProvider("OpenAI", "openai", "Sora 视频生成"), apiProvider("腾讯混元", "tencent", "图生视频与特效"),
-      apiProvider("字节跳动", "bytedance", "Seedance 视频创作"), apiProvider("通义千问", "alibaba", "Wan 视频模型"),
-      apiProvider("MiniMax", "minimax", "海螺视频生成"),
-    ],
-  },
-  {
-    id: "audio",
-    label: "音频处理",
-    icon: "/figma-home/icon-voice.svg",
-    href: "/products?cate=api",
-    brands: [
-      apiProvider("OpenAI", "openai", "Whisper 与语音合成"), apiProvider("MiniMax", "minimax", "语音与音乐生成"),
-      apiProvider("字节跳动", "bytedance", "实时语音能力"), apiProvider("腾讯混元", "tencent", "语音识别与合成"),
-      apiProvider("Google", "google", "多语言语音模型"),
-    ],
-  },
-  {
-    id: "info",
-    label: "信息检索",
-    icon: "/figma-home/icon-search.svg",
-    href: "/products?cate=api",
-    brands: [
-      apiProvider("Jina AI", "jina", "检索、重排与阅读"), apiProvider("Cohere", "cohere", "联网检索与重排"),
-      apiProvider("Google", "google", "全球搜索与知识理解"), apiProvider("Microsoft", "microsoft", "Bing 检索能力"),
-    ],
-  },
-  {
-    id: "rag",
-    label: "RAG知识库",
-    icon: "/figma-home/icon-db.svg",
-    href: "/products?cate=api",
-    brands: [
-      apiProvider("OpenAI", "openai", "Embedding 向量模型"), apiProvider("Jina AI", "jina", "Embedding 与 Rerank"),
-      apiProvider("Cohere", "cohere", "企业级 RAG 模型"), apiProvider("通义千问", "alibaba", "中文知识库检索"),
-      apiProvider("智谱清言", "zhipu", "知识问答与向量能力"),
-    ],
-  },
-];
 
 const workSceneIcons: Record<WorkSceneId, string> = {
   "content-office": "/figma-home/tool-content.svg",
@@ -513,15 +417,7 @@ const footerColumns = [
       { label: "行业 Skill", href: "/studio/skills" },
     ],
   },
-  {
-    title: "资源",
-    items: [
-      { label: "产品目录", href: "/products" },
-      { label: "图片创作", href: "/studio?preset=image-default" },
-      { label: "视频创作", href: "/studio?preset=video-default" },
-      { label: "企业方案", href: "/business" },
-    ],
-  },
+
   {
     title: "账户",
     items: [
@@ -726,7 +622,7 @@ export default function ModelMarket({ initialContent }: { initialContent?: Porta
   const activePath = productPaths.find((path) => path.id === activePathId) ?? productPaths[0];
   const stackPaths = stackOrderFrom(activePath.id).slice(0, STACK_VISIBLE);
   const popularApplications = managedApplications.filter((item) => item.enabled && item.group === "popular");
-  const latestApplications = managedApplications.filter((item) => item.enabled && item.group === "latest");
+  const apiCategories = homepageApiCategories(initialContent?.modelVendors ?? []);
   const visibleCapabilities = managedCapabilities.filter((item) => item.enabled).slice(0, 3);
 
   useEffect(() => {
@@ -1141,6 +1037,7 @@ export default function ModelMarket({ initialContent }: { initialContent?: Porta
                   </PortalLink>
                   <span className="portal-api-row-divider" aria-hidden />
                   <div className="portal-api-brands" aria-label={`${item.label}可用模型：${item.brands.map((brand) => brand.label).join("、")}`}>
+                    {item.brands.length === 0 && <span className="portal-api-empty">暂无已发布提供商</span>}
                     {item.brands.slice(0, 4).map((brand) => (
                       <PortalLink key={brand.label} href={brand.href} className="portal-api-brand">
                         <Image src={brand.icon} alt="" width={16} height={16} unoptimized />
@@ -1151,7 +1048,7 @@ export default function ModelMarket({ initialContent }: { initialContent?: Porta
                   <PortalLink href={item.href} className="portal-api-row-more" aria-label={`${item.label}更多`}>
                     <ChevronRight aria-hidden />
                   </PortalLink>
-                  {activeApiId === item.id ? (
+                  {activeApiId === item.id && item.brands.length > 0 ? (
                     <div
                       className="portal-api-touch-card"
                       role="dialog"
@@ -1160,7 +1057,7 @@ export default function ModelMarket({ initialContent }: { initialContent?: Porta
                       onMouseLeave={scheduleApiFlyoutClose}
                     >
                       <div className="portal-api-touch-head">
-                        <div><AssetIcon src={item.icon} /><strong>{item.label}</strong><span>{item.brands.length}+ 个热门能力</span></div>
+                        <div><AssetIcon src={item.icon} /><strong>{item.label}</strong><span>{item.brands.length} 个模型提供商</span></div>
                         <PortalLink href={item.href}>查看全部<ChevronRight aria-hidden /></PortalLink>
                       </div>
                       <div className="portal-api-touch-grid">
@@ -1307,27 +1204,6 @@ export default function ModelMarket({ initialContent }: { initialContent?: Porta
               {popularApplications.slice(1, 5).map((app, index) => (
                 <PortalLink href={app.href} aria-label={app.title} className="portal-app-support-card" key={app.title}>
                   <ManagedApplicationVisual item={app} fallback={portalApplicationShowcase[index + 1]?.preview ?? "poster"} />
-                </PortalLink>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="portal-app-showcase portal-app-showcase-v2 portal-app-showcase-latest" aria-labelledby="portal-latest-apps-title">
-          <div className="portal-app-showcase-head">
-            <h2 id="portal-latest-apps-title">最新上架</h2>
-            <PortalLink href="/products?cate=app" className="portal-arrow-link">查看全部应用</PortalLink>
-          </div>
-          <div className="portal-featured-app-grid">
-            {latestApplications.slice(0, 1).map((app) => (
-              <PortalLink href={app.href} aria-label={app.title} className="portal-featured-app-card" key={app.title}>
-                <ManagedApplicationVisual item={app} fallback={portalApplicationShowcase[5]?.preview ?? "product"} />
-              </PortalLink>
-            ))}
-            <div className="portal-app-support-grid">
-              {latestApplications.slice(1, 5).map((app, index) => (
-                <PortalLink href={app.href} aria-label={app.title} className="portal-app-support-card" key={app.title}>
-                  <ManagedApplicationVisual item={app} fallback={portalApplicationShowcase[index + 6]?.preview ?? "finance"} />
                 </PortalLink>
               ))}
             </div>

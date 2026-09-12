@@ -4835,7 +4835,7 @@ a.zen-button.zen-button-dark { color: #fff !important; background: #20232d; box-
   z-index: 1;
 }
 .portal-featured-slide-img {
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
 }
 .portal-featured-nav {
@@ -10759,7 +10759,7 @@ body {
 }
 
 .portal-home-dashboard .portal-bottom-footer {
-  grid-template-columns: 1.7fr repeat(5, minmax(0, 1fr)) !important;
+  grid-template-columns: 1.7fr repeat(4, minmax(0, 1fr)) !important;
   min-height: 260px;
 }
 
@@ -11424,5 +11424,14 @@ body {
     flex-shrink: 0;
     font-size: 12px !important;
     white-space: nowrap;
+  }
+}
+
+/* Images use contain above, preserving the complete banner at either density. */
+.portal-api-empty { color: #7890a7; font-size: 12px; }
+@media (min-width: 761px) and (max-width: 1600px) {
+  .portal-home-dashboard {
+    --reizo-public-canvas: clamp(1200px, 100vw, 1440px);
+    --portal-dashboard-columns: minmax(300px, .85fr) minmax(440px, 1.3fr) minmax(330px, .95fr);
   }
 }

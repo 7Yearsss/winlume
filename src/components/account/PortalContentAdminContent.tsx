@@ -104,10 +104,11 @@ const portalAdminSections: Array<{
   { id: "applications", label: "应用展示", description: "热门与最新工具", icon: WandSparkles },
   { id: "capabilities", label: "能力模块", description: "模型、Agent 与治理", icon: Sparkles },
   { id: "notifications", label: "通知公告", description: "门户消息与跳转", icon: Megaphone },
-  { id: "models", label: "模型厂商", description: "API 厂商与模型", icon: Upload },
+  { id: "models", label: "模型提供商", description: "首页 API 展示管理", icon: Upload },
 ];
 type CatalogModel = {
   model_name: string;
+  catalog_only?: boolean;
   vendor_key?: string;
   vendor_name?: string;
   vendor_logo?: string;
@@ -183,17 +184,20 @@ function categoryFromModel(model: CatalogModel): Category {
 function groupCatalog(models: CatalogModel[]): Vendor[] {
   const grouped = new Map<string, Vendor>();
   for (const model of models) {
+    if (model.catalog_only) continue;
     const key =
       (model.vendor_key || model.vendor_name || "other")
         .trim()
         .toLowerCase()
         .replace(/[^a-z0-9_-]/g, "-") || "other";
-    const current = grouped.get(key) ?? {
-      id: `catalog-${key}`,
+    const category = categoryFromModel(model);
+    const groupKey = `${key}-${category}`;
+    const current = grouped.get(groupKey) ?? {
+      id: `catalog-${groupKey}`,
       name: model.vendor_name || key,
       key,
       logoUrl: model.vendor_logo || "/vendors/other.svg",
-      category: categoryFromModel(model),
+      category,
       enabled: true,
       models: [],
     };
@@ -201,7 +205,7 @@ function groupCatalog(models: CatalogModel[]): Vendor[] {
       name: model.model_name,
       endpointTypes: model.supported_endpoint_types ?? ["chat"],
     });
-    grouped.set(key, current);
+    grouped.set(groupKey, current);
   }
   return [...grouped.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -539,7 +543,7 @@ function ApplicationShowcaseManager({
         <div>
           <h2 className="font-semibold">首页应用成果展示</h2>
           <p className="text-sm text-muted-foreground">
-            配置热门应用、最新上架对应的工具链接和展示图片；每组第一项作为大图展示。
+            配置应用的工具链接和展示图片；每组第一项作为大图展示。最新上架暂不在首页展示，配置保留。
           </p>
         </div>
         <div className="flex gap-2">
@@ -852,22 +856,22 @@ function VendorEditor({
       ),
     );
   const importVendor = (vendor: Vendor) => {
-    if (vendors.some((item) => item.key === vendor.key)) return;
+    if (vendors.some((item) => item.key === vendor.key && item.category === vendor.category)) return;
     onChange([...vendors, { ...vendor, id: uid("vendor") }]);
   };
   return (
     <section className="grid gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="font-semibold">API 模型厂商</h2>
+          <h2 className="font-semibold">API 模型提供商管理</h2>
           <p className="text-sm text-muted-foreground">
-            按六大类配置厂商、图标和展示模型。导入现有目录后可直接编辑。
+            按分类新增或导入提供商，维护名称、图标和模型列表。勾选展示并保存后发布到首页；取消勾选即可隐藏。此处配置不代表完成网关接入。
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" type="button" onClick={addVendor}>
             <WandSparkles className="h-4 w-4" />
-            新增厂商
+            新增提供商
           </Button>
           <Button size="sm" type="button" disabled={saving} onClick={onSave}>
             <Save className="h-4 w-4" />
@@ -947,7 +951,7 @@ function VendorEditor({
                   update(index, { enabled: event.target.checked })
                 }
               />
-              在目录展示
+              在首页展示
             </label>
             <Button
               type="button"
@@ -967,7 +971,7 @@ function VendorEditor({
         <div>
           <h3 className="font-semibold">已同步 API 模型目录</h3>
           <p className="text-sm text-muted-foreground">
-            当前网关返回{" "}
+            可导入目录包含{" "}
             {catalogVendors.reduce(
               (total, vendor) => total + vendor.models.length,
               0,
@@ -979,7 +983,7 @@ function VendorEditor({
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
           {catalogVendors.map((vendor) => (
             <details
-              key={vendor.key}
+              key={`${vendor.key}-${vendor.category}`}
               className="rounded-lg border border-border bg-background p-3"
             >
               <summary className="cursor-pointer list-none">
@@ -1013,11 +1017,11 @@ function VendorEditor({
                 variant="outline"
                 size="sm"
                 type="button"
-                disabled={vendors.some((item) => item.key === vendor.key)}
+                disabled={vendors.some((item) => item.key === vendor.key && item.category === vendor.category)}
                 onClick={() => importVendor(vendor)}
               >
                 <Pencil className="h-3.5 w-3.5" />
-                {vendors.some((item) => item.key === vendor.key)
+                {vendors.some((item) => item.key === vendor.key && item.category === vendor.category)
                   ? "已在配置中"
                   : "导入并编辑"}
               </Button>
@@ -1029,12 +1033,12 @@ function VendorEditor({
   );
 }
 
-export default function PortalContentAdminContent() {
+export default function PortalContentAdminContent({ initialSection = "carousel" }: { initialSection?: PortalAdminSection }) {
   const { account, accountLoading } = useModals();
   const [content, setContent] = useState<PortalContent>(emptyContent);
   const [catalogVendors, setCatalogVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeSection, setActiveSection] = useState<PortalAdminSection>("carousel");
+  const [activeSection, setActiveSection] = useState<PortalAdminSection>(initialSection);
   const [savingSection, setSavingSection] = useState<PortalAdminSection | null>(null);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
@@ -1081,6 +1085,21 @@ export default function PortalContentAdminContent() {
     return () => window.clearTimeout(timer);
   }, [account?.platform_role, load]);
   const save = async (section: NonNullable<typeof savingSection>) => {
+    if (section === "models") {
+      const keys = new Set<string>();
+      for (const vendor of content.modelVendors) {
+        if (!vendor.name.trim() || !/^[a-z0-9_-]+$/.test(vendor.key) || vendor.models.length === 0) {
+          setError("请填写提供商名称、英文小写标识（可含数字、短横线和下划线）以及至少一个模型。");
+          return;
+        }
+        const key = `${vendor.category}:${vendor.key}`;
+        if (keys.has(key)) {
+          setError("同一分类下的提供商标识不能重复，请合并模型列表。");
+          return;
+        }
+        keys.add(key);
+      }
+    }
     setSavingSection(section);
     setNotice("");
     setError("");
@@ -1201,7 +1220,7 @@ export default function PortalContentAdminContent() {
               <div>
                 <h2 className="font-semibold">首页轮播图</h2>
                 <p className="text-sm text-muted-foreground">
-                  上传封面或粘贴图片地址，启用后显示在首页中部轮播。
+                  上传一张横版图片即可适配桌面与笔记本，建议沿用 3:2（如 1536×1024）；图片等比完整展示，不裁切。
                 </p>
               </div>
               <div className="flex gap-2">
