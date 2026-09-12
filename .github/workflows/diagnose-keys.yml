@@ -47,7 +47,7 @@ jobs:
         if: inputs.verify_creation
         run: |
           npm ci --ignore-scripts
-          node_modules/.bin/esbuild scripts/verify-key-creation.ts --bundle --platform=node --packages=external --outfile=/tmp/reizo-key-check.cjs
+          node_modules/.bin/esbuild scripts/verify-key-creation.ts --bundle --platform=node --external:pg-native --outfile=/tmp/reizo-key-check.cjs
       - name: Verify real creation and clean up the test key
         if: inputs.verify_creation
         env:
