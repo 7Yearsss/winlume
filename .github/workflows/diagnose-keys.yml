@@ -38,6 +38,11 @@ jobs:
           REMOTE
       - uses: actions/checkout@v4
         if: inputs.verify_creation
+      - name: Inspect upstream routing host access
+        if: inputs.verify_creation
+        run: |
+          ssh-keyscan -H 15.204.82.213 >> ~/.ssh/known_hosts
+          ssh -i ~/.ssh/key -o BatchMode=yes -o IdentitiesOnly=yes -o ConnectTimeout=8 ubuntu@15.204.82.213 'hostname; sudo -n systemctl is-active new-api-native' || true
       - uses: actions/setup-node@v4
         if: inputs.verify_creation
         with:

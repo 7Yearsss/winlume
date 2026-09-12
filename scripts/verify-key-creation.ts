@@ -34,7 +34,10 @@ async function main() {
       body: JSON.stringify({ key: "MaxTokenAutoGroups", value: String(routing.groups.length) }), signal: AbortSignal.timeout(15_000),
     });
     const result = await response.json();
-    if (!response.ok || !result.success) throw new Error("Unable to enable all authorized routing groups");
+    if (!response.ok || !result.success) {
+      console.log(JSON.stringify({ automaticCapacityUpdateStatus: response.status, upstreamCode: result.code }));
+      throw new Error("Unable to enable all authorized routing groups");
+    }
     console.log("Automatic group capacity increased to cover this workspace");
   }
   const name = `reizo-check-${Date.now()}`;
