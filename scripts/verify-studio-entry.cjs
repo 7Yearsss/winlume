@@ -17,12 +17,13 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
       if(path==='/api/account/config') body={success:true,data:{}};
       await route.fulfill({json:body});
     });
-    for (const model of ['gpt-6-astra','gpt-5.5']) {
+    for (const model of ['gpt-6-astra','gpt-5.5','gpt-image-2.5']) {
       await page.goto((process.env.REIZO_TEST_URL || 'https://reizo-ai.com')+'/studio?model='+model+'&entry=model-catalog');
       await page.waitForTimeout(2000);
       const text = await page.locator('body').innerText();
       if(text.includes('会话不存在或无权访问') || text.includes('gpt-4o-mini') || !text.includes(model)) throw new Error('FAIL: catalog entry restored stale session or lost model: '+model+' '+text.slice(-700));
+      if(model==='gpt-image-2.5' && !(await page.locator('.composer-mode-trigger:visible').first().innerText()).includes('图片')) throw new Error('Image model did not select image mode');
     }
-    console.log('PASS: repeated model entry ignores legacy tabs and preserves requested model');
+    console.log('PASS: repeated model entry preserves selection; image model selects image mode');
   } finally {await browser.close();}
 })().catch(e=>{console.error(e.message);process.exit(1)});
