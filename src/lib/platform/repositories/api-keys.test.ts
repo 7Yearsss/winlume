@@ -101,6 +101,7 @@ describe("ApiKeyRepository.create (new-api backed)", () => {
 
     expect(findByOrganizationId).toHaveBeenCalledWith("org-1");
     expect(createTeamToken).toHaveBeenCalledWith("pat", "CI key", {
+      allAvailableGroups: true,
       expiredTime: -1,
       modelLimits: [],
       allowIps: [],
@@ -127,6 +128,7 @@ describe("ApiKeyRepository.update (new-api backed)", () => {
       ipAllowlist: ["203.0.113.10"],
     });
     expect(updateTeamToken).toHaveBeenCalledWith("pat", 55, {
+      allAvailableGroups: true,
       name: "CI key v2",
       expiredTime: Math.floor(expiresAt.getTime() / 1000),
       modelLimits: ["gpt-4o"],

@@ -53,6 +53,9 @@ export function consoleJson<T>(data: T, init?: ResponseInit): Response {
 }
 
 export function consoleError(error: unknown): Response {
+  if (error instanceof NewApiTeamError && error.status === 409) {
+    return consoleJson({ error: error.message, code: "team_routing_not_configured" }, { status: 409 });
+  }
   if (error instanceof NewApiTeamError && error.status === 401) {
     return consoleJson({ error: "工作区的模型服务授权已失效，自动恢复未成功，请联系管理员修复工作区授权。", code: "team_authorization_failed" }, { status: 502 });
   }

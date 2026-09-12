@@ -57,6 +57,7 @@ export class ApiKeyRepository {
     if (!name) throw new Error("An API key name is required.");
 
     await this.withTeamPat(input.organizationId, pat => createTeamToken(pat, name, {
+      allAvailableGroups: true,
       expiredTime: unixExpiry(input.expiresAt),
       modelLimits: input.allowedModels ?? [],
       allowIps: input.ipAllowlist ?? [],
@@ -174,6 +175,7 @@ export class ApiKeyRepository {
 
     if (existing.newApiTokenId && existing.organizationId) {
       await this.withTeamPat(existing.organizationId, pat => updateTeamToken(pat, existing.newApiTokenId!, {
+        allAvailableGroups: true,
         name,
         expiredTime: unixExpiry(input.expiresAt),
         modelLimits: input.allowedModels,

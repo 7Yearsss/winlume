@@ -62,6 +62,27 @@ describe("loginAndMintPat", () => {
 });
 
 describe("createTeamToken / findTeamTokenIdByName / fetchTeamTokenKey", () => {
+  it("routes an unrestricted workspace key across all authorized groups", async () => {
+    const mock = vi.fn(async (url: string) => new Response(JSON.stringify({ success: true, data:
+      url.endsWith("/self/groups") ? { auto: {}, gpt: { ratio: .2 }, images: { ratio: .4 }, domestic: { ratio: .3 } } :
+      url.endsWith("/auto-groups") ? { groups: ["gpt"], max_count: 5 } : undefined,
+    })));
+    vi.stubGlobal("fetch", mock);
+    await createTeamToken("pat", "all models", { allAvailableGroups: true });
+    expect(mock).toHaveBeenLastCalledWith("https://v2api.top/api/token/", expect.objectContaining({
+      body: expect.stringContaining('"auto_groups":["gpt","domestic","images"]'),
+    }));
+    const body = JSON.parse((mock.mock.calls.at(-1) as unknown as [string, RequestInit])[1].body as string);
+    expect(body.model_limits_enabled).toBe(false); expect(body.group).toBe("auto");
+  });
+  it("does not silently truncate routing groups to an insufficient limit", async () => {
+    const mock = vi.fn(async (url: string) => new Response(JSON.stringify({ success: true, data:
+      url.endsWith("/self/groups") ? { gpt: {}, domestic: {} } : { groups: ["gpt"], max_count: 1 },
+    })));
+    vi.stubGlobal("fetch", mock);
+    await expect(createTeamToken("pat", "all", { allAvailableGroups: true })).rejects.toThrow("上限不足");
+    expect(mock).toHaveBeenCalledTimes(2);
+  });
   it("creates a token with the default auto group and unlimited quota", async () => {
     delete process.env.NEW_API_TOKEN_GROUP;
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ success: true }), { status: 200 }));
