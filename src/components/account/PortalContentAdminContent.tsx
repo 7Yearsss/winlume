@@ -26,6 +26,7 @@ import {
   ConsolePage,
 } from "@/components/console/ConsolePage";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { PORTAL_IMAGE_MAX_FILE_BYTES } from "@/lib/portal/content-limits";
 
 type Category = "llm" | "image" | "audio" | "video" | "embed" | "other";
@@ -824,77 +825,104 @@ function CapabilityShowcaseManager({
   );
 }
 
-function VendorEditor({
-  vendors,
-  catalogVendors,
-  onChange,
-  onSave,
-  saving,
-}: {
-  vendors: Vendor[];
-  catalogVendors: Vendor[];
-  onChange: (next: Vendor[]) => void;
-  onSave: () => void;
-  saving: boolean;
+function VendorEditor({ vendors, catalogVendors, onChange, onSave, saving }: {
+  vendors: Vendor[]; catalogVendors: Vendor[]; onChange: (next: Vendor[]) => void;
+  onSave: () => void; saving: boolean;
 }) {
-  const addVendor = () =>
-    onChange([
-      ...vendors,
-      {
-        id: uid("vendor"),
-        name: "新厂商",
-        key: uid("vendor"),
-        logoUrl: "",
-        category: "llm",
-        enabled: true,
-        models: [{ name: "新模型", endpointTypes: ["chat"] }],
-      },
-    ]);
-  const update = (index: number, patch: Partial<Vendor>) =>
-    onChange(
-      vendors.map((item, itemIndex) =>
-        itemIndex === index ? { ...item, ...patch } : item,
-      ),
-    );
-  const importVendor = (vendor: Vendor) => {
-    if (vendors.some((item) => item.key === vendor.key && item.category === vendor.category)) return;
-    onChange([...vendors, { ...vendor, id: uid("vendor") }]);
+  const [query, setQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const [draft, setDraft] = useState<Vendor | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [modelText, setModelText] = useState("");
+  const [draftError, setDraftError] = useState("");
+  const [importQuery, setImportQuery] = useState("");
+  const filtered = vendors.filter((vendor) =>
+    (!categoryFilter || vendor.category === categoryFilter) &&
+    `${vendor.name} ${vendor.key} ${vendor.models.map((model) => model.name).join(" ")}`.toLowerCase().includes(query.trim().toLowerCase()),
+  );
+  const pages = Math.max(1, Math.ceil(filtered.length / 8));
+  const currentPage = Math.min(page, pages);
+  const visible = filtered.slice((currentPage - 1) * 8, currentPage * 8);
+  const openEditor = (vendor: Vendor, existing = false) => {
+    setEditingId(existing ? vendor.id : null);
+    setDraft({ ...vendor, models: vendor.models.map((model) => ({ ...model, endpointTypes: [...model.endpointTypes] })) });
+    setModelText(modelsToText(vendor.models));
+    setDraftError("");
   };
+  const addVendor = () => openEditor({ id: uid("vendor"), name: "", key: "", logoUrl: "", category: "llm", enabled: true, models: [] });
+  const updateDraft = (patch: Partial<Vendor>) => {
+    const id = draft?.id;
+    setDraft((current) => current?.id === id && current ? { ...current, ...patch } : current);
+  };
+  const confirmDraft = () => {
+    if (!draft) return;
+    const models = textToModels(modelText);
+    const name = draft.name.trim();
+    const key = draft.key.trim().toLowerCase();
+    if (!name || !/^[a-z0-9_-]+$/.test(key) || !models.length) {
+      setDraftError("请填写名称、英文标识和至少一个模型。"); return;
+    }
+    if (models.length > 40) { setDraftError("每条配置最多支持 40 个模型。"); return; }
+    if (vendors.some((vendor) => vendor.id !== editingId && vendor.key === key && vendor.category === draft.category)) {
+      setDraftError("该分类已存在此提供商，请编辑已有记录。"); return;
+    }
+    const next = { ...draft, name, key, models, logoUrl: draft.logoUrl || getVendorByKey(key).logo };
+    onChange(editingId ? vendors.map((vendor) => vendor.id === editingId ? next : vendor) : [...vendors, next]);
+    if (!editingId) { setQuery(""); setCategoryFilter(""); setPage(Math.ceil((vendors.length + 1) / 8)); }
+    setDraft(null);
+  };
+  const importCandidates = catalogVendors.filter((vendor) => `${vendor.name} ${vendor.key} ${categoryLabel(vendor.category)}`.toLowerCase().includes(importQuery.trim().toLowerCase()));
   return (
-    <section className="grid gap-4">
+    <section className="grid gap-4" aria-label="提供商管理列表">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="font-semibold">API 模型提供商管理</h2>
-          <p className="text-sm text-muted-foreground">
-            按分类新增或导入提供商，维护名称、图标和模型列表。保存后同步首页、API 子菜单目录与推荐栏；取消勾选即可隐藏。此处配置不代表完成网关接入。
-          </p>
+          <p className="text-sm text-muted-foreground">共 {vendors.length} 条配置 · {vendors.filter((vendor) => vendor.enabled).length} 条展示。修改后点击“保存并发布”，同步首页与 API 目录。</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" type="button" onClick={addVendor}>
-            <WandSparkles className="h-4 w-4" />
-            新增提供商
-          </Button>
-          <Button size="sm" type="button" disabled={saving} onClick={onSave}>
-            <Save className="h-4 w-4" />
-            保存模型配置
-          </Button>
+          <Button variant="outline" size="sm" type="button" disabled={saving || vendors.length >= 80} onClick={addVendor}><Plus className="h-4 w-4" />新增提供商</Button>
+          <Button size="sm" type="button" disabled={saving} onClick={onSave}><Save className="h-4 w-4" />{saving ? "正在发布…" : "保存并发布"}</Button>
         </div>
       </div>
-      <p className="text-sm text-muted-foreground">内置厂商图标已保存在本站。选择厂商可自动匹配名称、标识和图标，也可上传自定义图标。</p>
-      {vendors.map((vendor, index) => (
-        <article
-          key={vendor.id}
-          className="grid gap-3 rounded-xl border border-border bg-background p-4"
-        >
+      <div className="flex flex-wrap gap-3">
+        <input aria-label="搜索提供商" placeholder="搜索名称、标识或模型" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} className="h-10 min-w-48 flex-1 rounded-md border border-border bg-background px-3 text-sm" />
+        <select aria-label="筛选提供商分类" value={categoryFilter} onChange={(event) => { setCategoryFilter(event.target.value); setPage(1); }} className="h-10 rounded-md border border-border bg-background px-3 text-sm"><option value="">全部分类</option>{categories.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select>
+      </div>
+      <div className="overflow-x-auto rounded-xl border border-border bg-background">
+        <table className="w-full min-w-[600px] text-left text-sm" aria-label="提供商列表">
+          <thead className="bg-muted/40 text-muted-foreground"><tr><th className="px-4 py-3 font-medium">提供商</th><th className="px-4 py-3 font-medium">分类</th><th className="px-4 py-3 font-medium">模型</th><th className="px-4 py-3 font-medium">展示状态</th><th className="px-4 py-3 text-right font-medium">操作</th></tr></thead>
+          <tbody>{visible.map((vendor) => <tr key={vendor.id} className="border-t border-border" data-provider-row>
+            <td className="px-4 py-3"><div className="flex items-center gap-3"><img src={vendor.logoUrl || getVendorByKey(vendor.key).logo} alt="" className="h-8 w-8 shrink-0 object-contain" /><div><strong className="block max-w-64 truncate" title={vendor.name}>{vendor.name}</strong><small className="text-muted-foreground">{vendor.key}</small></div></div></td>
+            <td className="px-4 py-3">{categoryLabel(vendor.category)}</td><td className="px-4 py-3">{vendor.models.length} 个</td>
+            <td className="px-4 py-3"><label className="flex items-center gap-2"><input type="checkbox" disabled={saving} aria-label={`${vendor.name} ${categoryLabel(vendor.category)} 展示`} checked={vendor.enabled} onChange={(event) => onChange(vendors.map((item) => item.id === vendor.id ? { ...item, enabled: event.target.checked } : item))} />{vendor.enabled ? "展示" : "隐藏"}</label></td>
+            <td className="px-4 py-3"><div className="flex justify-end gap-1"><Button type="button" variant="ghost" size="sm" disabled={saving} aria-label={`编辑 ${vendor.name} ${categoryLabel(vendor.category)}`} onClick={() => openEditor(vendor, true)}><Pencil className="h-4 w-4" />编辑</Button><Button type="button" variant="ghost" size="sm" disabled={saving} aria-label={`删除 ${vendor.name} ${categoryLabel(vendor.category)}`} onClick={() => onChange(vendors.filter((item) => item.id !== vendor.id))}><Trash2 className="h-4 w-4 text-red-500" /></Button></div></td>
+          </tr>)}</tbody>
+        </table>
+        {!visible.length && <p className="px-4 py-10 text-center text-sm text-muted-foreground">{vendors.length ? "没有匹配的提供商，试试其他关键词或分类。" : "尚未添加提供商，点击“新增提供商”开始。"}</p>}
+      </div>
+      <div className="flex items-center justify-between text-sm text-muted-foreground"><span>共 {filtered.length} 条 · 每页 8 条</span><div className="flex items-center gap-3"><Button type="button" variant="outline" size="sm" aria-label="提供商上一页" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}><ChevronLeft className="h-4 w-4" /></Button><span>{currentPage} / {pages}</span><Button type="button" variant="outline" size="sm" aria-label="提供商下一页" disabled={currentPage >= pages} onClick={() => setPage(currentPage + 1)}><ChevronRight className="h-4 w-4" /></Button></div></div>
+      <details className="rounded-xl border border-dashed border-border p-4">
+        <summary className="cursor-pointer text-sm font-medium">从已同步目录导入 · {catalogVendors.length} 条提供商分类</summary>
+        <input aria-label="搜索可导入提供商" placeholder="搜索可导入提供商" value={importQuery} onChange={(event) => setImportQuery(event.target.value)} className="mt-3 h-9 w-full rounded-md border border-border bg-background px-3 text-sm" />
+        <div className="mt-3 grid max-h-72 gap-2 overflow-y-auto">
+          {importCandidates.map((vendor) => <div key={`${vendor.key}-${vendor.category}`} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background p-3"><div className="flex items-center gap-3"><img src={vendor.logoUrl} alt="" className="h-7 w-7 object-contain" /><div className="text-sm"><strong>{vendor.name}</strong><span className="ml-2 text-muted-foreground">{categoryLabel(vendor.category)} · {vendor.models.length} 个模型</span></div></div><Button type="button" variant="outline" size="sm" disabled={saving || vendors.length >= 80 || vendors.some((item) => item.key === vendor.key && item.category === vendor.category)} onClick={() => openEditor({ ...vendor, id: uid("vendor") })}>{vendors.some((item) => item.key === vendor.key && item.category === vendor.category) ? "已添加" : "导入并编辑"}</Button></div>)}
+          {!importCandidates.length && <p className="py-3 text-sm text-muted-foreground">暂无可导入的提供商。</p>}
+        </div>
+      </details>
+      <Dialog open={draft !== null} onOpenChange={(open) => { if (!open) setDraft(null); }}>
+        <DialogContent className="max-h-[85vh] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto bg-white">
+          <DialogHeader><DialogTitle>{editingId ? "编辑提供商" : "新增提供商"}</DialogTitle><DialogDescription>选择内置厂商可自动填入图标。完成编辑后，回到列表“保存并发布”。</DialogDescription></DialogHeader>
+          {draft && <div className="grid gap-4">
           <label className="grid gap-1 text-sm">
             匹配内置厂商与图标
             <select
               className="h-9 rounded-md border border-border px-3 text-sm"
-              value={PLAZA_VENDORS.some((item) => item.key === vendor.key && item.key !== "other") ? vendor.key : ""}
+              value={PLAZA_VENDORS.some((item) => item.key === draft.key && item.key !== "other") ? draft.key : ""}
               onChange={(event) => {
                 if (!event.target.value) return;
                 const preset = getVendorByKey(event.target.value);
-                update(index, { name: preset.brandLabel, key: preset.key, logoUrl: preset.logo });
+                updateDraft({ name: preset.brandLabel, key: preset.key, logoUrl: preset.logo });
               }}
             >
               <option value="">选择厂商，或手动填写自定义提供商</option>
@@ -903,11 +931,11 @@ function VendorEditor({
               ))}
             </select>
           </label>
-          <div className="grid gap-2 md:grid-cols-[120px_1fr_1fr_180px]">
-            <label className="grid h-20 place-items-center overflow-hidden rounded-lg border border-dashed border-border cursor-pointer">
-              {vendor.logoUrl ? (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="grid h-20 w-20 place-items-center overflow-hidden rounded-lg border border-dashed border-border cursor-pointer sm:col-span-2">
+              {draft.logoUrl ? (
                 <img
-                  src={vendor.logoUrl}
+                  src={draft.logoUrl}
                   alt=""
                   className="h-16 max-w-24 object-contain"
                 />
@@ -923,28 +951,29 @@ function VendorEditor({
                 accept="image/*"
                 onChange={(event) => {
                   void readImage(event, (url) =>
-                    update(index, { logoUrl: url }),
+                    updateDraft({ logoUrl: url }),
                   ).catch((reason) => window.alert(reason.message));
                 }}
               />
             </label>
             <input
               className="h-9 rounded-md border border-border px-3 text-sm"
-              value={vendor.name}
+              value={draft.name}
               placeholder="厂商名称"
-              onChange={(event) => update(index, { name: event.target.value })}
+              onChange={(event) => updateDraft({ name: event.target.value })}
             />
             <input
               className="h-9 rounded-md border border-border px-3 text-sm"
-              value={vendor.key}
+              value={draft.key}
               placeholder="厂商标识（英文）"
-              onChange={(event) => update(index, { key: event.target.value })}
+              onChange={(event) => updateDraft({ key: event.target.value })}
             />
             <select
               className="h-9 rounded-md border border-border px-3 text-sm"
-              value={vendor.category}
+              aria-label="提供商分类"
+              value={draft.category}
               onChange={(event) =>
-                update(index, { category: event.target.value as Category })
+                updateDraft({ category: event.target.value as Category })
               }
             >
               {categories.map((item) => (
@@ -956,98 +985,20 @@ function VendorEditor({
           </div>
           <textarea
             className="min-h-24 rounded-md border border-border p-3 font-mono text-xs"
-            value={modelsToText(vendor.models)}
+            aria-label="模型列表"
+            value={modelText}
             onChange={(event) =>
-              update(index, { models: textToModels(event.target.value) })
+              setModelText(event.target.value)
             }
           />
-          <div className="flex justify-between">
-            <label className="flex items-center gap-1 text-xs">
-              <input
-                type="checkbox"
-                checked={vendor.enabled}
-                onChange={(event) =>
-                  update(index, { enabled: event.target.checked })
-                }
-              />
-              在首页与 API 目录展示
-            </label>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                onChange(vendors.filter((_, itemIndex) => itemIndex !== index))
-              }
-            >
-              <Trash2 className="mr-1 h-4 w-4 text-red-500" />
-              删除厂商
-            </Button>
-          </div>
-        </article>
-      ))}
-      <section className="grid gap-3 rounded-xl border border-dashed border-primary-200 bg-primary-50/30 p-4">
-        <div>
-          <h3 className="font-semibold">已同步 API 模型目录</h3>
-          <p className="text-sm text-muted-foreground">
-            可导入目录包含{" "}
-            {catalogVendors.reduce(
-              (total, vendor) => total + vendor.models.length,
-              0,
-            )}{" "}
-            个模型、{catalogVendors.length}{" "}
-            个厂商。点击“导入并编辑”后才会写入配置草稿。
-          </p>
-        </div>
-        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-          {catalogVendors.map((vendor) => (
-            <details
-              key={`${vendor.key}-${vendor.category}`}
-              className="rounded-lg border border-border bg-background p-3"
-            >
-              <summary className="cursor-pointer list-none">
-                <div className="flex items-center gap-2">
-                  <img
-                    src={vendor.logoUrl}
-                    alt=""
-                    className="h-6 w-6 rounded object-contain"
-                  />
-                  <strong className="text-sm">{vendor.name}</strong>
-                  <span className="ml-auto text-xs text-muted-foreground">
-                    {vendor.models.length} 个模型
-                  </span>
-                </div>
-                <span className="mt-1 block text-xs text-primary-600">
-                  {categoryLabel(vendor.category)}
-                </span>
-              </summary>
-              <ul className="mt-3 grid gap-1 border-t border-border pt-2 text-xs text-muted-foreground">
-                {vendor.models.map((model) => (
-                  <li key={model.name}>
-                    {model.name}
-                    <span className="ml-1 text-[10px]">
-                      {model.endpointTypes.join(" · ")}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <Button
-                className="mt-3"
-                variant="outline"
-                size="sm"
-                type="button"
-                disabled={vendors.some((item) => item.key === vendor.key && item.category === vendor.category)}
-                onClick={() => importVendor(vendor)}
-              >
-                <Pencil className="h-3.5 w-3.5" />
-                {vendors.some((item) => item.key === vendor.key && item.category === vendor.category)
-                  ? "已在配置中"
-                  : "导入并编辑"}
-              </Button>
-            </details>
-          ))}
-        </div>
-      </section>
+
+            <p className="text-xs text-muted-foreground">每行一个模型：模型名称 | 接口类型（逗号分隔）| 简介。最多 40 个。</p>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.enabled} onChange={(event) => updateDraft({ enabled: event.target.checked })} />在首页与 API 目录展示</label>
+            {draftError && <p role="alert" className="text-sm text-red-600">{draftError}</p>}
+          </div>}
+          <DialogFooter><Button type="button" variant="outline" onClick={() => setDraft(null)}>取消</Button><Button type="button" onClick={confirmDraft}>完成编辑</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
