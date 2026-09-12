@@ -1,11 +1,17 @@
 name: Diagnose API key creation
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      verify_creation:
+        description: Create and clean up one temporary verification key
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
   inspect:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 10
     steps:
       - name: Read sanitized creation errors
         env:
@@ -29,4 +35,34 @@ jobs:
                   if "query:" not in line and "params:" not in line:
                       print(line[:400].rstrip())
           '
+          REMOTE
+      - uses: actions/checkout@v4
+        if: inputs.verify_creation
+      - uses: actions/setup-node@v4
+        if: inputs.verify_creation
+        with:
+          node-version: 22
+          cache: npm
+      - name: Build verification helper
+        if: inputs.verify_creation
+        run: |
+          npm ci --ignore-scripts
+          node_modules/.bin/esbuild scripts/verify-key-creation.ts --bundle --platform=node --packages=external --outfile=/tmp/reizo-key-check.cjs
+      - name: Verify real creation and clean up the test key
+        if: inputs.verify_creation
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          scp -i ~/.ssh/key -o BatchMode=yes -o IdentitiesOnly=yes /tmp/reizo-key-check.cjs "$DEPLOY_USER@$DEPLOY_HOST:/tmp/reizo-key-check.cjs"
+          ssh -i ~/.ssh/key -o BatchMode=yes -o IdentitiesOnly=yes "$DEPLOY_USER@$DEPLOY_HOST" sudo -n bash -s <<'REMOTE'
+          set -eu
+          set -a
+          [ ! -f /opt/reizo/.env ] || . /opt/reizo/.env
+          [ ! -f /etc/reizo/web.env ] || . /etc/reizo/web.env
+          set +a
+          cd /opt/reizo
+          cp /tmp/reizo-key-check.cjs .codex-key-check.cjs
+          trap 'rm -f /opt/reizo/.codex-key-check.cjs /tmp/reizo-key-check.cjs' EXIT
+          node .codex-key-check.cjs
           REMOTE

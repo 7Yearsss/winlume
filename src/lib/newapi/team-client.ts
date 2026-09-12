@@ -65,6 +65,7 @@ export async function loginAndMintPat(username: string, password: string): Promi
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
     cache: "no-store",
+    signal: AbortSignal.timeout(15_000),
   });
   const loginData = requireData(
     await parseEnvelope<{ access_token?: string }>(loginResponse),
@@ -78,6 +79,7 @@ export async function loginAndMintPat(username: string, password: string): Promi
     method: "GET",
     headers: { Authorization: `Bearer ${loginData.access_token}` },
     cache: "no-store",
+    signal: AbortSignal.timeout(15_000),
   });
   return requireData(await parseEnvelope<string>(patResponse), patResponse.status);
 }

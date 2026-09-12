@@ -1,4 +1,5 @@
 import { getCurrentUserId } from "@/lib/auth/session";
+import { NewApiTeamError } from "@/lib/newapi/team-client";
 import { DEFAULT_QUOTA_PER_UNIT } from "@/lib/catalog/plaza-display";
 import { getNewApiUserQuota } from "@/lib/newapi/admin-client";
 import {
@@ -52,6 +53,9 @@ export function consoleJson<T>(data: T, init?: ResponseInit): Response {
 }
 
 export function consoleError(error: unknown): Response {
+  if (error instanceof NewApiTeamError && error.status === 401) {
+    return consoleJson({ error: "工作区的模型服务授权已失效，自动恢复未成功，请联系管理员修复工作区授权。", code: "team_authorization_failed" }, { status: 502 });
+  }
   if (error instanceof ConsoleRequestError) {
     return consoleJson({ error: error.message, code: error.code }, { status: error.status });
   }

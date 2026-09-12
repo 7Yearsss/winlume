@@ -10,6 +10,7 @@ import {
   findTeamTokenIdByName,
   revokeTeamToken,
   updateTeamToken,
+  NewApiTeamError,
 } from "../../newapi/team-client";
 import { TeamNewApiMappingRepository } from "./team-new-api-mapping";
 import type { ApiKeyStatus } from "../types";
@@ -38,22 +39,31 @@ export class ApiKeyRepository {
     this.teamMappings = new TeamNewApiMappingRepository(database);
   }
 
+  private async withTeamPat<T>(organizationId: string, operation: (pat: string) => Promise<T>): Promise<T> {
+    const mapping = await this.teamMappings.findByOrganizationId(organizationId);
+    if (!mapping) throw new Error("This organization has no linked new-api team account.");
+    try { return await operation(decryptSecret(mapping.newApiPatCiphertext)); }
+    catch (error) {
+      // An explicit 401 means this operation was rejected before execution.
+      // Never replay successful creation, timeouts, or other uncertain writes.
+      if (!(error instanceof NewApiTeamError) || error.status !== 401) throw error;
+      const pat = await this.teamMappings.refreshPatIfUnchanged(organizationId, mapping.newApiPatCiphertext);
+      return operation(pat);
+    }
+  }
+
   async create(input: CreateApiKeyInput): Promise<{ record: ApiKeyRecord; plaintext: string }> {
     const name = input.name.trim();
     if (!name) throw new Error("An API key name is required.");
 
-    const mapping = await this.teamMappings.findByOrganizationId(input.organizationId);
-    if (!mapping) throw new Error("This organization has no linked new-api team account.");
-    const pat = decryptSecret(mapping.newApiPatCiphertext);
-
-    await createTeamToken(pat, name, {
+    await this.withTeamPat(input.organizationId, pat => createTeamToken(pat, name, {
       expiredTime: unixExpiry(input.expiresAt),
       modelLimits: input.allowedModels ?? [],
       allowIps: input.ipAllowlist ?? [],
-    });
-    const newApiTokenId = await findTeamTokenIdByName(pat, name);
+    }));
+    const newApiTokenId = await this.withTeamPat(input.organizationId, pat => findTeamTokenIdByName(pat, name));
     if (newApiTokenId === null) throw new Error("new-api token was created but could not be found afterward.");
-    const newApiKey = await fetchTeamTokenKey(pat, newApiTokenId);
+    const newApiKey = await this.withTeamPat(input.organizationId, pat => fetchTeamTokenKey(pat, newApiTokenId));
 
     const generated = generateApiKey();
     const [record] = await this.database
@@ -136,10 +146,7 @@ export class ApiKeyRepository {
     const record = await this.setStatus(id, "revoked");
     if (record?.newApiTokenId && record.organizationId) {
       try {
-        const mapping = await this.teamMappings.findByOrganizationId(record.organizationId);
-        if (mapping) {
-          await revokeTeamToken(decryptSecret(mapping.newApiPatCiphertext), record.newApiTokenId);
-        }
+        await this.withTeamPat(record.organizationId, pat => revokeTeamToken(pat, record.newApiTokenId!));
       } catch (error) {
         console.error("Failed to revoke underlying new-api token", { keyId: id, error });
       }
@@ -166,14 +173,12 @@ export class ApiKeyRepository {
     if (!name) throw new Error("An API key name is required.");
 
     if (existing.newApiTokenId && existing.organizationId) {
-      const mapping = await this.teamMappings.findByOrganizationId(existing.organizationId);
-      if (!mapping) throw new Error("This organization has no linked new-api team account.");
-      await updateTeamToken(decryptSecret(mapping.newApiPatCiphertext), existing.newApiTokenId, {
+      await this.withTeamPat(existing.organizationId, pat => updateTeamToken(pat, existing.newApiTokenId!, {
         name,
         expiredTime: unixExpiry(input.expiresAt),
         modelLimits: input.allowedModels,
         allowIps: input.ipAllowlist,
-      });
+      }));
     }
 
     const [record] = await this.database

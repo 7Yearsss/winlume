@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { findByOrganizationId, constructDatabases } = vi.hoisted(() => ({
+const { findByOrganizationId, refreshPatIfUnchanged, constructDatabases } = vi.hoisted(() => ({
   findByOrganizationId: vi.fn(),
+  refreshPatIfUnchanged: vi.fn(async () => "fresh-pat"),
   constructDatabases: [] as unknown[],
 }));
 
 vi.mock("../../newapi/team-client", () => ({
+  NewApiTeamError: class extends Error { constructor(message: string, public status: number) { super(message); } },
   createTeamToken: vi.fn(async () => {}),
   findTeamTokenIdByName: vi.fn(async () => 55),
   fetchTeamTokenKey: vi.fn(async () => "sk-newapi-raw"),
@@ -24,10 +26,11 @@ vi.mock("./team-new-api-mapping", () => ({
       constructDatabases.push(database);
     }
     findByOrganizationId = findByOrganizationId;
+    refreshPatIfUnchanged = refreshPatIfUnchanged;
   },
 }));
 
-import { createTeamToken, revokeTeamToken, updateTeamToken } from "../../newapi/team-client";
+import { createTeamToken, revokeTeamToken, updateTeamToken, fetchTeamTokenKey, NewApiTeamError } from "../../newapi/team-client";
 import { ApiKeyRepository } from "./api-keys";
 
 const mappingRow = {
@@ -64,6 +67,24 @@ describe("ApiKeyRepository construction", () => {
 });
 
 describe("ApiKeyRepository.create (new-api backed)", () => {
+  it("recovers an expired team credential and retries only the rejected operation", async () => {
+    vi.mocked(createTeamToken).mockRejectedValueOnce(new NewApiTeamError("Unauthorized, invalid access token", 401));
+    const repository = new ApiKeyRepository(fakeDatabase({ id: "key-1" }));
+    await expect(repository.create({ userId: "user-1", organizationId: "org-1", name: "ce" })).resolves.toHaveProperty("plaintext");
+    expect(refreshPatIfUnchanged).toHaveBeenCalledWith("org-1", "enc(pat)");
+    expect(createTeamToken).toHaveBeenLastCalledWith("fresh-pat", "ce", expect.objectContaining({ modelLimits: [] }));
+  });
+  it("does not create another token when key retrieval needs refreshed credentials", async () => {
+    vi.mocked(fetchTeamTokenKey).mockRejectedValueOnce(new NewApiTeamError("Unauthorized", 401));
+    await new ApiKeyRepository(fakeDatabase({ id: "key-1" })).create({ userId: "user-1", organizationId: "org-1", name: "ce" });
+    expect(createTeamToken).toHaveBeenCalledTimes(1);
+    expect(fetchTeamTokenKey).toHaveBeenLastCalledWith("fresh-pat", 55);
+  });
+  it("does not retry quota, permission or network failures", async () => {
+    vi.mocked(createTeamToken).mockRejectedValueOnce(new NewApiTeamError("Forbidden", 403));
+    await expect(new ApiKeyRepository(fakeDatabase({})).create({ userId: "user-1", organizationId: "org-1", name: "ce" })).rejects.toThrow("Forbidden");
+    expect(refreshPatIfUnchanged).not.toHaveBeenCalled();
+  });
   it("creates a new-api token before storing the local key row", async () => {
     const database = fakeDatabase({
       id: "key-1",

@@ -162,8 +162,12 @@ function KeyDialog({
               <FieldLabel htmlFor="key-name">名称</FieldLabel>
               <Input id="key-name" autoFocus value={name} onChange={(event) => setName(event.target.value)} maxLength={50} placeholder="例如：生产环境" />
             </Field>
+            <p className="text-sm text-muted-foreground">默认可调用账户内全部可用模型，系统自动选择路由，无需为不同模型分别创建 Key。</p>
+            <details open={editing && Boolean(modelScopes || ipAllowList || expiresAt)} className="grid gap-4">
+              <summary className="cursor-pointer text-sm font-medium">高级限制（可选）</summary>
+              <div className="mt-4 grid gap-5">
             <Field>
-              <FieldLabel htmlFor="key-models">允许的模型</FieldLabel>
+              <FieldLabel htmlFor="key-models">限制可用模型（可选）</FieldLabel>
               <Input id="key-models" value={modelScopes} onChange={(event) => setModelScopes(event.target.value)} placeholder="例如：gpt-4o, claude-3-5-sonnet" />
               <FieldDescription>逗号分隔。留空表示不限制可调用的模型。</FieldDescription>
             </Field>
@@ -177,6 +181,8 @@ function KeyDialog({
               <Input id="key-expires" type="datetime-local" value={expiresAt} onChange={(event) => setExpiresAt(event.target.value)} />
               <FieldDescription>留空表示永不过期。额度在工作区账户上统一管理。</FieldDescription>
             </Field>
+              </div>
+            </details>
           </FieldGroup>
           {error ? <FieldError>{error}</FieldError> : null}
           <DialogFooter>
