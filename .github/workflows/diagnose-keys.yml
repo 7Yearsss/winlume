@@ -1,0 +1,31 @@
+name: Diagnose API key creation
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Read sanitized creation errors
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > ~/.ssh/key
+          chmod 600 ~/.ssh/key
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          ssh -i ~/.ssh/key -o BatchMode=yes -o IdentitiesOnly=yes "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
+          sudo -n systemctl is-active reizo
+          sudo -n journalctl -u reizo --since '2 hours ago' --no-pager -o cat | python3 -c '
+          import sys,re
+          patterns = ["Console request failed", "no linked new-api", "new-api token was", "NewApiTeamError", "new-api returned", "violates", "does not exist", "invalid input syntax", "authentication tag", "Unsupported state", "code:"]
+          for line in sys.stdin:
+              if any(p in line for p in patterns):
+                  line = re.sub(r"(?:sk-|pat-|wl_)[A-Za-z0-9_-]+", "[redacted]", line)
+                  if "query:" not in line and "params:" not in line:
+                      print(line[:400].rstrip())
+          '
+          REMOTE
