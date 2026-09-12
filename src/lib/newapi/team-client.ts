@@ -128,6 +128,16 @@ export async function getTeamBalance(pat: string): Promise<{ quota: number; used
 async function allPermittedRouting(pat: string) {
   const { groups, maxCount } = await getTeamRoutingGroups(pat);
   if (!groups.length) throw new NewApiTeamError("账户暂无可用模型分组。", 400);
+  // Subscription-only groups cannot be explicitly selected on current new-api.
+  // Keep inherited routing when it already covers the entire entitled catalog.
+  const catalogs = await Promise.all(["/api/user/models", "/api/user/models?group=auto"].map(async path => {
+    const response = await fetch(`${baseUrl()}${path}`, { headers: teamHeaders(pat), cache: "no-store", signal: AbortSignal.timeout(15_000) });
+    return parseEnvelope<string[]>(response);
+  }));
+  const [all, inherited] = catalogs;
+  if (Array.isArray(all) && all.length && Array.isArray(inherited) && all.every(model => inherited.includes(model))) {
+    return { group: "auto", auto_groups: [] as string[], cross_group_retry: true };
+  }
   if (!Number.isInteger(maxCount) || groups.length > maxCount) {
     throw new NewApiTeamError("可用分组数量超过网关限制，请管理员调整后重试。", 400);
   }

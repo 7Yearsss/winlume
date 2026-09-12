@@ -81,6 +81,16 @@ describe("loginAndMintPat", () => {
 });
 
 describe("createTeamToken / findTeamTokenIdByName / fetchTeamTokenKey", () => {
+  it("preserves complete subscription routing instead of snapshotting unselectable subscription groups", async () => {
+    const mock=vi.fn(async (url:string)=>new Response(JSON.stringify({success:true,data:
+      url.endsWith('/self/groups') ? {gpt:{},subscriptionOnly:{}} :
+      url.endsWith('/auto-groups') ? {groups:['gpt'],max_count:1} :
+      url.includes('/api/user/models') ? ['gpt-test','claude-test'] : undefined,
+    })));
+    vi.stubGlobal('fetch',mock);
+    await createTeamToken('pat','subscription',{allAvailableGroups:true});
+    expect(JSON.parse((mock.mock.calls.at(-1) as unknown as [string,RequestInit])[1].body as string).auto_groups).toEqual([]);
+  });
   it("includes permitted groups missing from global auto routing", async () => {
     const mock = vi.fn(async (url: string) => new Response(JSON.stringify({ success: true, data:
       url.endsWith("/self/groups") ? { auto: {}, gpt: { ratio: .2 }, images: { ratio: .4 }, domestic: { ratio: .3 } } :
@@ -91,7 +101,7 @@ describe("createTeamToken / findTeamTokenIdByName / fetchTeamTokenKey", () => {
     const body = JSON.parse((mock.mock.calls.at(-1) as unknown as [string, RequestInit])[1].body as string);
     expect(body.model_limits_enabled).toBe(false); expect(body.group).toBe("auto");
     expect(body.auto_groups).toEqual(["gpt", "domestic", "images"]);
-    expect(mock).toHaveBeenCalledTimes(3);
+    expect(mock).toHaveBeenCalledTimes(5);
   });
   it("rejects oversized routing before creating a partially usable key", async () => {
     const mock = vi.fn(async (url: string) => new Response(JSON.stringify({ success: true, data:
@@ -99,7 +109,7 @@ describe("createTeamToken / findTeamTokenIdByName / fetchTeamTokenKey", () => {
     })));
     vi.stubGlobal("fetch", mock);
     await expect(createTeamToken("pat", "all", { allAvailableGroups: true })).rejects.toThrow("分组数量");
-    expect(mock).toHaveBeenCalledTimes(2);
+    expect(mock).toHaveBeenCalledTimes(4);
   });
   it("creates a token with the default auto group and unlimited quota", async () => {
     delete process.env.NEW_API_TOKEN_GROUP;
