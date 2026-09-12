@@ -32,7 +32,18 @@ async function main() {
     // Snapshot only routing and restrictions; never persist raw key material.
     const fields=['id','name','group','auto_groups','cross_group_retry','remain_quota','unlimited_quota','expired_time','model_limits_enabled','model_limits','allow_ips'];
     writeFileSync(`${folder}/${key.id}.json`,JSON.stringify(Object.fromEntries(fields.map(f=>[f,before[f]]))),{mode:0o600});
-    await updateTeamToken(pat,key.newApiTokenId,{name:before.name,allAvailableGroups:true});
+    try {
+      await updateTeamToken(pat,key.newApiTokenId,{name:before.name,allAvailableGroups:true});
+    } catch (error: any) {
+      // The gateway rejects some independently granted legacy groups before
+      // writing. Preserve those keys rather than narrowing their existing route.
+      if (error?.status === 400 && /Auto 分组 .*不可用或无权访问/.test(error.message)) {
+        skipped++;
+        console.log(JSON.stringify({legacyGrantedRoutingPreserved:true}));
+        continue;
+      }
+      throw error;
+    }
     const visible=await models(decryptSecret(key.newApiKeyCiphertext));
     const afterResponse=await fetch(`${base}/api/token/${key.newApiTokenId}`,{headers:{Authorization:`Bearer ${pat}`},signal:AbortSignal.timeout(15000)});
     const after=await afterResponse.json();
