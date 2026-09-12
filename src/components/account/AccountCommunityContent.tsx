@@ -12,7 +12,7 @@ const collections = [
   },
   {
     href: "/account/personalization",
-    title: "人格与工具",
+    title: "偏好设置",
     description: "个人或工作区共享的默认指令和工具组合。",
     icon: Boxes,
   },

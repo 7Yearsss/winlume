@@ -63,7 +63,7 @@ const groups: NavGroup[] = [
     items: [
       { href: "/account/keys", label: "API Keys", mobileLabel: "Keys", icon: KeyRound },
       { href: "/account/logs", label: "请求日志", mobileLabel: "日志", icon: ScrollText },
-      { href: "/account/personalization", label: "人格与工具", mobileLabel: "设置", icon: Settings2 },
+      { href: "/account/personalization", label: "偏好设置", mobileLabel: "设置", icon: Settings2 },
       { href: "/account/team", label: "团队", mobileLabel: "团队", icon: UsersRound },
     ],
   },
