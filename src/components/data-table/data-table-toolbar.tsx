@@ -11,6 +11,7 @@ interface DataTableToolbarProps<TData> {
   table: Table<TData>;
   searchColumnId?: string;
   searchPlaceholder?: string;
+  viewOptionsLabel?: string;
   /** Use table-wide search instead of a single column. */
   globalSearch?: boolean;
   children?: ReactNode;
@@ -21,6 +22,7 @@ export function DataTableToolbar<TData>({
   searchColumnId,
   searchPlaceholder = "搜索…",
   globalSearch = false,
+  viewOptionsLabel,
   children,
 }: DataTableToolbarProps<TData>) {
   const searchColumn = !globalSearch && searchColumnId ? table.getColumn(searchColumnId) : undefined;
@@ -60,7 +62,7 @@ export function DataTableToolbar<TData>({
           </Button>
         ) : null}
       </div>
-      <DataTableViewOptions table={table} />
+      <DataTableViewOptions table={table} label={viewOptionsLabel} />
     </div>
   );
 }

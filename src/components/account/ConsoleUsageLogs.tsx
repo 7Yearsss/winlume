@@ -231,7 +231,7 @@ export function ConsoleUsageLogs({
           </Alert>
         ) : (
           <div className="flex flex-col gap-3">
-            <DataTableToolbar table={table} globalSearch searchPlaceholder="搜索模型、Key 或请求 ID…">
+            <DataTableToolbar table={table} globalSearch searchPlaceholder="搜索模型、Key 或请求 ID…" viewOptionsLabel="筛选列名">
               <Select
                 value={status}
                 onValueChange={(value) => {
