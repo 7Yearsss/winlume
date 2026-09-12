@@ -8,6 +8,7 @@ import {
   useId,
   useMemo,
   useRef,
+  useEffectEvent,
   useState,
   type ClipboardEvent,
   type DragEvent,
@@ -163,7 +164,6 @@ const FALLBACK_MODELS = [
   "deepseek-chat",
 ] as const;
 
-const PLAZA_LIMIT = 30;
 const DRAFT_DEBOUNCE_MS = 400;
 
 type ModelVendorGroup = {
@@ -500,6 +500,15 @@ export default function Composer({
   capabilityPresetId,
   onCapabilityPresetChange,
 }: ComposerProps) {
+  // Catalog requests can finish after the URL entry or a user action selects
+  // a model. Always reconcile against the latest selection, not mount props.
+  const reconcileLoadedModels = useEffectEvent((names: string[]) => {
+    if (names.length) {
+      if (!model || !names.includes(model)) onModelChange(names[0]);
+    } else if (model) {
+      onModelChange("");
+    }
+  });
   const isHero = variant === "hero";
   const promptId = useId();
   const modelId = useId();
@@ -728,8 +737,7 @@ export default function Composer({
               completion_ratio: 1,
               supported_endpoint_types: ["openai"],
             } satisfies PlazaModel;
-          })
-          .slice(0, PLAZA_LIMIT);
+          });
         const listedNames = [
           ...new Set(
             listedModels
@@ -743,7 +751,7 @@ export default function Composer({
           // picker. Select the first routable model when the saved model has
           // disappeared from the current New API account.
           setModelOptions(listedNames);
-          if (!model || !listedNames.includes(model)) onModelChange(listedNames[0]);
+          reconcileLoadedModels(listedNames);
           setCustomMode(false);
         } else {
           // A successful empty response means the current account has no
@@ -751,7 +759,7 @@ export default function Composer({
           // entries that would fail only after the user sends a message.
           setModelCatalog([]);
           setModelOptions([]);
-          if (model) onModelChange("");
+          reconcileLoadedModels([]);
         }
       })
       .catch(() => {

@@ -135,7 +135,7 @@ function StudioHomeInner({ active, tabId }: { active: boolean; tabId: string }) 
   const searchParams = useSearchParams();
   const { openLogin, account } = useModals();
   const [draft, setDraft] = useState("");
-  const [model, setModel] = useState(FALLBACK_DEFAULT_MODEL);
+  const [model, setModel] = useState(() => searchParams.get("model")?.trim() || FALLBACK_DEFAULT_MODEL);
   const [starting, setStarting] = useState(false);
   /** FLIP composer to bottom dock before route change (visual only). */
   const [docking, setDocking] = useState(false);
@@ -233,7 +233,7 @@ function StudioHomeInner({ active, tabId }: { active: boolean; tabId: string }) 
           })
           .catch(() => undefined);
       }
-      setModel(getDefaultModel());
+      setModel(modelParam || getDefaultModel());
       setCapabilityPresetId(null);
 
       if (!modelParam && !presetParam) return;
@@ -251,6 +251,9 @@ function StudioHomeInner({ active, tabId }: { active: boolean; tabId: string }) 
               : undefined;
           const resolvedModel = requestedModel ?? preset?.model;
           if (resolvedModel) setModel(resolvedModel);
+          if (modelParam && !requestedModel) {
+            setError(`当前账户暂不可用模型 ${modelParam}，请在模型列表中选择可用模型。`);
+          }
           if (preset) {
             setCapabilityPresetId(preset.id);
             if (!skill) setSelectedSkillIds([]);
