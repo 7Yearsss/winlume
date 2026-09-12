@@ -10039,6 +10039,16 @@ html[data-studio-theme="dark"] .composer-selected-model-chevron,
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  max-width: 100%;
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
+}
+
+.portal-home-dashboard .portal-api-brands {
+  flex-wrap: wrap;
+  overflow: visible;
+  row-gap: 6px;
 }
 
 .portal-home-dashboard .portal-api-brand img {
