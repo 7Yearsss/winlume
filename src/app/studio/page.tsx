@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useWorkspaceTabs } from "@/lib/studio/workspace-tabs";
 
@@ -14,14 +14,15 @@ import { useWorkspaceTabs } from "@/lib/studio/workspace-tabs";
  */
 function StudioHomeRouteInner() {
   const searchParams = useSearchParams();
-  const hasEntryContext = searchParams.toString().length > 0;
+  const entryQuery = searchParams.toString();
+  const handledEntry = useRef<string | null>(null);
   const { ensureHomeTabActive, registerHomeTab } = useWorkspaceTabs();
   useEffect(() => {
-    if (hasEntryContext) registerHomeTab();
+    if (handledEntry.current === entryQuery) return;
+    handledEntry.current = entryQuery;
+    if (entryQuery) registerHomeTab();
     else ensureHomeTabActive();
-    // Only ever act once per real navigation into this route.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [entryQuery, registerHomeTab, ensureHomeTabActive]);
   return null;
 }
 

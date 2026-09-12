@@ -12,6 +12,7 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
+import { useModals } from "@/components/providers";
 
 export type WorkspaceTab =
   | { id: string; kind: "home"; title: string }
@@ -29,10 +30,10 @@ function tabHref(tab: WorkspaceTab): string {
   return tab.kind === "home" ? "/studio" : `/studio/c/${tab.sessionId}`;
 }
 
-function loadStored(): StoredState | null {
+function loadStored(storageKey: string): StoredState | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(storageKey);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as StoredState;
     if (!Array.isArray(parsed.tabs) || parsed.tabs.length === 0) return null;
@@ -42,10 +43,10 @@ function loadStored(): StoredState | null {
   }
 }
 
-function persist(state: StoredState) {
+function persist(storageKey: string, state: StoredState) {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    window.localStorage.setItem(storageKey, JSON.stringify(state));
   } catch {
     // Best-effort persistence only.
   }
@@ -77,10 +78,19 @@ type WorkspaceTabsContextValue = {
 const WorkspaceTabsContext = createContext<WorkspaceTabsContextValue | null>(null);
 
 export function WorkspaceTabsProvider({ children }: { children: ReactNode }) {
+  const { account, accountLoading } = useModals();
+  if (accountLoading) return null;
+  const owner = account?.id ?? "guest";
+  // Never restore the old, unscoped cache: its sessions may belong to another account.
+  return <OwnedWorkspaceTabsProvider key={owner} storageKey={`${STORAGE_KEY}:${owner}`}>{children}</OwnedWorkspaceTabsProvider>;
+}
+
+function OwnedWorkspaceTabsProvider({ children, storageKey }: { children: ReactNode; storageKey: string }) {
   const router = useRouter();
   const [tabs, setTabs] = useState<WorkspaceTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const hydratedRef = useRef(false);
+  const [hydrated, setHydrated] = useState(false);
   // Mirrors state synchronously so callbacks can read the latest tabs
   // without touching setState updaters (which React may invoke twice under
   // StrictMode — this file intentionally keeps all navigation and other
@@ -95,7 +105,7 @@ export function WorkspaceTabsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (hydratedRef.current) return;
     hydratedRef.current = true;
-    const stored = loadStored();
+    const stored = loadStored(storageKey);
     if (stored) {
       const storedActiveTabId = stored.tabs.some((tab) => tab.id === stored.activeTabId)
         ? stored.activeTabId
@@ -104,12 +114,13 @@ export function WorkspaceTabsProvider({ children }: { children: ReactNode }) {
       setTabs(stored.tabs);
       setActiveTabId(storedActiveTabId);
     }
-  }, []);
+    setHydrated(true);
+  }, [storageKey]);
 
   useEffect(() => {
     if (!hydratedRef.current || tabs.length === 0) return;
-    persist({ tabs, activeTabId });
-  }, [tabs, activeTabId]);
+    persist(storageKey, { tabs, activeTabId });
+  }, [tabs, activeTabId, storageKey]);
 
   const activateTab = useCallback(
     (id: string) => {
@@ -232,7 +243,9 @@ export function WorkspaceTabsProvider({ children }: { children: ReactNode }) {
     ],
   );
 
-  return <WorkspaceTabsContext.Provider value={value}>{children}</WorkspaceTabsContext.Provider>;
+  // Route effects must run after hydration, otherwise restoring tabs overwrites
+  // the fresh home tab requested by a model-catalog navigation.
+  return <WorkspaceTabsContext.Provider value={value}>{hydrated ? children : null}</WorkspaceTabsContext.Provider>;
 }
 
 export function useWorkspaceTabs(): WorkspaceTabsContextValue {

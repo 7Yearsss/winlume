@@ -749,7 +749,7 @@ export default function StudioSessionView({
             </Link>
           ) : null}
         </div>
-        {session?.model || chat.model ? (
+        {session?.model && !loadError ? (
           <p className="truncate font-mono text-[11px] text-[#8A8298]">
             {chat.model || session?.model}
           </p>
@@ -856,6 +856,7 @@ export default function StudioSessionView({
     chat.model,
     closeWorksRail,
     listOpen,
+    loadError,
     mobileTab,
     openWorksRail,
     previewOpen,
