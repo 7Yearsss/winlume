@@ -7415,6 +7415,17 @@ a.zen-button.zen-button-dark { color: #fff !important; background: #20232d; box-
   scrollbar-width: none;
 }
 .portal-model-vendor-scroller::-webkit-scrollbar { display: none; }
+.portal-directory-model-card.portal-directory-model-link {
+  display: block;
+  min-height: 186px;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+.portal-directory-model-link:focus-visible {
+  outline: 3px solid #3d7df0;
+  outline-offset: 3px;
+}
 .portal-model-vendor-scroller button {
   flex: 0 0 208px;
   min-height: 72px;
