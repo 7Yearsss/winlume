@@ -31,12 +31,12 @@ async function main() {
   if (!access.ok) throw new Error("Mapped administrator cannot access provisioning management");
   console.log(JSON.stringify({ mappedAdminVerified: true, adminManagementAccessible: true, credentialsDiffer: token !== process.env.NEW_API_ADMIN_TOKEN }));
   if (process.env.REPAIR_REGISTRATION !== "true") return;
-  if (!/^[A-Za-z0-9._-]+$/.test(token)) throw new Error("Credential cannot be safely encoded in environment file");
+  if (!token || /[\r\n\0']/.test(token)) throw new Error("Credential cannot be safely encoded in environment file");
   const path = "/etc/reizo/web.env";
   mkdirSync("/etc/reizo", { recursive: true, mode: 0o700 });
   let previous = "";
   try { previous = readFileSync(path, "utf8"); } catch (error: any) { if (error.code !== "ENOENT") throw error; }
-  const next = previous.split(/\r?\n/).filter(line => !/^\s*(?:export\s+)?NEW_API_ADMIN_TOKEN\s*=/.test(line)).join("\n").trimEnd() + `\nNEW_API_ADMIN_TOKEN=${token}\n`;
+  const next = previous.split(/\r?\n/).filter(line => !/^\s*(?:export\s+)?NEW_API_ADMIN_TOKEN\s*=/.test(line)).join("\n").trimEnd() + `\nNEW_API_ADMIN_TOKEN='${token}'\n`;
   writeFileSync(path + ".registration-backup", previous, { mode: 0o600 });
   writeFileSync(path + ".registration-tmp", next, { mode: 0o600 });
   renameSync(path + ".registration-tmp", path);
