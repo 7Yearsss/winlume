@@ -89,6 +89,7 @@ export async function addNewApiUserQuota(newApiUserId: number, amount: number): 
 export async function getNewApiUserQuota(newApiUserId: number): Promise<{ quota: number; usedQuota: number }> {
   const data = await adminRequest<{ quota: number; used_quota: number }>(`/api/user/${newApiUserId}`, {
     method: "GET",
+    signal: AbortSignal.timeout(5_000),
   });
   if (!data) throw new NewApiAdminError("new-api returned no user data", 502);
   return { quota: data.quota, usedQuota: data.used_quota };

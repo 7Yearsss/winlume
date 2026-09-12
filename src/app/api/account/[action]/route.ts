@@ -325,7 +325,19 @@ export async function GET(_request: NextRequest, context: RouteContext<"/api/acc
     return NextResponse.json({ success: false, message: "工作区未关联额度账户。" }, { status: 409 });
   }
   const { getNewApiUserQuota } = await import("@/lib/newapi/admin-client");
-  const { quota, usedQuota } = await getNewApiUserQuota(mapping.newApiUserId);
+  // Balance synchronization is optional account metadata, not authentication.
+  // Leave it absent on failure so the UI shows syncing instead of a false zero.
+  let balance: { quota?: number; used_quota?: number } = {};
+  try {
+    const { quota, usedQuota } = await getNewApiUserQuota(mapping.newApiUserId);
+    balance = { quota, used_quota: usedQuota };
+  } catch (error) {
+    console.error("Reizo account balance sync failed", {
+      status: typeof error === "object" && error !== null && "status" in error
+        ? error.status : undefined,
+      kind: error instanceof Error ? error.name : "UnknownError",
+    });
+  }
 
   return NextResponse.json({
     success: true,
@@ -334,8 +346,7 @@ export async function GET(_request: NextRequest, context: RouteContext<"/api/acc
       username: user.username,
       display_name: user.displayName,
       email: user.email ?? "",
-      quota,
-      used_quota: usedQuota,
+      ...balance,
       group: "personal",
       platform_role: user.platformRole,
     },

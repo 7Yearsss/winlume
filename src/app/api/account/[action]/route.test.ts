@@ -82,4 +82,27 @@ describe("GET /api/account/self", () => {
     const body = await response.json();
     expect(body.success).toBe(false);
   });
+
+  it("keeps an authenticated account available when the balance service rejects its credential", async () => {
+    mocks.getNewApiUserQuota.mockRejectedValue(Object.assign(new Error("Unauthorized, invalid access token"), { status: 401 }));
+    const response = await GET(new Request("https://reizo.example/api/account/self") as never, {
+      params: Promise.resolve({ action: "self" }),
+    });
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.success).toBe(true);
+    expect(body.data.id).toBe("user-1");
+    expect(body.data.platform_role).toBe("user");
+    expect(body.data).not.toHaveProperty("quota");
+    expect(body.data).not.toHaveProperty("used_quota");
+  });
+
+  it("still rejects an unauthenticated request", async () => {
+    mocks.getCurrentAuthContext.mockResolvedValue(null);
+    const response = await GET(new Request("https://reizo.example/api/account/self") as never, {
+      params: Promise.resolve({ action: "self" }),
+    });
+    expect(response.status).toBe(401);
+    expect(mocks.getNewApiUserQuota).not.toHaveBeenCalled();
+  });
 });
