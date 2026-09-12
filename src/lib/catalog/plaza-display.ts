@@ -11,6 +11,11 @@ export function resolvePlazaVendor(
   fallback?: { name?: string; logo?: string },
 ): PlazaVendor {
   const vendorKey = model.vendor_key?.trim().toLowerCase();
+  if (model.portal_category && vendorKey) {
+    const base = getVendorByKey(vendorKey);
+    return { ...base, key: vendorKey, name: model.vendor_name || base.name,
+      brandLabel: model.vendor_name || base.brandLabel, logo: model.vendor_logo || base.logo };
+  }
   if (vendorKey) {
     const byKey = getVendorByKey(vendorKey);
     if (byKey.key !== "other" || vendorKey === "other") return byKey;

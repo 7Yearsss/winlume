@@ -18,6 +18,7 @@ import {
   WandSparkles,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { PLAZA_VENDORS, getVendorByKey } from "@/lib/catalog/vendors";
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useModals } from "@/components/providers";
 import {
@@ -865,7 +866,7 @@ function VendorEditor({
         <div>
           <h2 className="font-semibold">API 模型提供商管理</h2>
           <p className="text-sm text-muted-foreground">
-            按分类新增或导入提供商，维护名称、图标和模型列表。勾选展示并保存后发布到首页；取消勾选即可隐藏。此处配置不代表完成网关接入。
+            按分类新增或导入提供商，维护名称、图标和模型列表。保存后同步首页、API 子菜单目录与推荐栏；取消勾选即可隐藏。此处配置不代表完成网关接入。
           </p>
         </div>
         <div className="flex gap-2">
@@ -879,11 +880,29 @@ function VendorEditor({
           </Button>
         </div>
       </div>
+      <p className="text-sm text-muted-foreground">内置厂商图标已保存在本站。选择厂商可自动匹配名称、标识和图标，也可上传自定义图标。</p>
       {vendors.map((vendor, index) => (
         <article
           key={vendor.id}
           className="grid gap-3 rounded-xl border border-border bg-background p-4"
         >
+          <label className="grid gap-1 text-sm">
+            匹配内置厂商与图标
+            <select
+              className="h-9 rounded-md border border-border px-3 text-sm"
+              value={PLAZA_VENDORS.some((item) => item.key === vendor.key && item.key !== "other") ? vendor.key : ""}
+              onChange={(event) => {
+                if (!event.target.value) return;
+                const preset = getVendorByKey(event.target.value);
+                update(index, { name: preset.brandLabel, key: preset.key, logoUrl: preset.logo });
+              }}
+            >
+              <option value="">选择厂商，或手动填写自定义提供商</option>
+              {PLAZA_VENDORS.filter((item) => item.key !== "other").map((item) => (
+                <option value={item.key} key={item.key}>{item.brandLabel} · {item.key}</option>
+              ))}
+            </select>
+          </label>
           <div className="grid gap-2 md:grid-cols-[120px_1fr_1fr_180px]">
             <label className="grid h-20 place-items-center overflow-hidden rounded-lg border border-dashed border-border cursor-pointer">
               {vendor.logoUrl ? (
@@ -951,7 +970,7 @@ function VendorEditor({
                   update(index, { enabled: event.target.checked })
                 }
               />
-              在首页展示
+              在首页与 API 目录展示
             </label>
             <Button
               type="button"
@@ -1051,7 +1070,7 @@ export default function PortalContentAdminContent({ initialSection = "carousel" 
           credentials: "same-origin",
           cache: "no-store",
         }),
-        fetch("/api/catalog/plaza", {
+        fetch("/api/catalog/plaza?scope=admin-import", {
           credentials: "same-origin",
           cache: "no-store",
         }),

@@ -1,6 +1,7 @@
 import { getPlatformRepositories } from "@/lib/platform/repositories";
 import { PORTAL_IMAGE_MAX_DATA_URL_LENGTH } from "@/lib/portal/content-limits";
 import { createHash } from "node:crypto";
+import { getVendorByKey } from "@/lib/catalog/vendors";
 
 export const PORTAL_CONTENT_KEY = "public-portal";
 const PORTAL_CONTENT_CACHE_MS = 60_000;
@@ -70,7 +71,7 @@ export function normalizePortalContent(input: unknown): PortalContentConfig {
       const modelName = string(data.name, 120);
       return modelName ? [{ name: modelName, endpointTypes: Array.isArray(data.endpointTypes) ? data.endpointTypes.map((value) => string(value, 40)).filter(Boolean).slice(0, 8) : ["chat"], description: string(data.description, 300) || undefined }] : [];
     }) : [];
-    return name && models.length ? [{ id: id(row.id, `vendor-${index + 1}`), name, key, logoUrl: string(row.logoUrl, PORTAL_IMAGE_MAX_DATA_URL_LENGTH) || "/vendors/other.svg", category: category(row.category), enabled: row.enabled !== false, models }] : [];
+    return name && models.length ? [{ id: id(row.id, `vendor-${index + 1}`), name, key, logoUrl: string(row.logoUrl, PORTAL_IMAGE_MAX_DATA_URL_LENGTH) || getVendorByKey(key).logo, category: category(row.category), enabled: row.enabled !== false, models }] : [];
   }) : [];
   const applicationShowcase = Array.isArray(raw.applicationShowcase) ? raw.applicationShowcase.slice(0, 20).flatMap((item, index) => {
     const row = item && typeof item === "object" ? item as Record<string, unknown> : {}; const title = string(row.title, 100);

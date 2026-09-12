@@ -102,12 +102,12 @@ let plazaInFlight: Promise<PlazaData> | null = null;
  * 同页多个组件需要广场数据时共享同一次请求，
  * 成功后短缓存 60s；失败不缓存，下次调用自然重试。
  */
-export function fetchPlaza(): Promise<PlazaData> {
-  if (plazaCache && plazaCache.expires > Date.now()) return Promise.resolve(plazaCache.data);
+export function fetchPlaza(options: { fresh?: boolean } = {}): Promise<PlazaData> {
+  if (!options.fresh && plazaCache && plazaCache.expires > Date.now()) return Promise.resolve(plazaCache.data);
   if (plazaInFlight) return plazaInFlight;
   plazaInFlight = (async () => {
     try {
-      const response = await fetch("/api/catalog/plaza");
+      const response = await fetch("/api/catalog/plaza", { cache: "no-store" });
       const payload = (await response.json()) as PlazaResponse;
       if (!response.ok || !payload.success) throw new Error(payload.message || "模型广场暂时不可访问。");
       const models = payload.data ?? [];

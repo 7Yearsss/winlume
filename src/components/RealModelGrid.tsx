@@ -44,10 +44,12 @@ export function RealModelGrid({
 
   useEffect(() => {
     let cancelled = false;
-    fetchPlaza()
+    const refresh = () => {
+      void fetchPlaza({ fresh: true })
       .then((data) => {
         if (cancelled) return;
         setModels(data.models);
+        setError("");
         setLoading(false);
       })
       .catch((caught) => {
@@ -55,8 +57,12 @@ export function RealModelGrid({
         setError(caught instanceof Error ? caught.message : "模型广场暂时不可访问。");
         setLoading(false);
       });
+    };
+    refresh();
+    window.addEventListener("focus", refresh);
     return () => {
       cancelled = true;
+      window.removeEventListener("focus", refresh);
     };
   }, [retryCount]);
 
@@ -151,7 +157,7 @@ export function RealModelGrid({
   return (
     <div className={gridClass}>
       {visible.map((model) => (
-        <ModelPlazaCard key={model.model_name} model={model} variant={variant} selected={selectedModelName === model.model_name} onSelect={onSelectModel} />
+        <ModelPlazaCard key={`${model.vendor_key}:${model.portal_category}:${model.model_name}`} model={model} variant={variant} selected={selectedModelName === model.model_name} onSelect={onSelectModel} />
       ))}
     </div>
   );

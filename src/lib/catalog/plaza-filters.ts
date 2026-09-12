@@ -1,5 +1,5 @@
 import type { PlazaModel } from "@/lib/catalog";
-import { PLAZA_VENDORS } from "@/lib/catalog/vendors";
+import { resolvePlazaVendor } from "./plaza-display";
 
 /** Capability facets for the live pricing catalog (not the old static product brands). */
 export type PlazaCapabilityFilter =
@@ -95,13 +95,11 @@ export function filterPlazaModels(
 
 /** Vendors that actually appear in a model list (for filter chips). */
 export function vendorsPresentIn(models: PlazaModel[]) {
-  const counts = new Map<string, number>();
+  const vendors = new Map<string, ReturnType<typeof resolvePlazaVendor> & { count: number }>();
   for (const model of models) {
-    const key = model.vendor_key ?? "other";
-    counts.set(key, (counts.get(key) ?? 0) + 1);
+    const vendor = resolvePlazaVendor(model);
+    const current = vendors.get(vendor.key);
+    vendors.set(vendor.key, { ...vendor, count: (current?.count ?? 0) + 1 });
   }
-  return PLAZA_VENDORS.filter((vendor) => (counts.get(vendor.key) ?? 0) > 0).map((vendor) => ({
-    ...vendor,
-    count: counts.get(vendor.key) ?? 0,
-  }));
+  return [...vendors.values()];
 }

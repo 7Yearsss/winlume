@@ -6,6 +6,8 @@ import { getAuthMode } from "@/lib/platform/auth";
 import { inferVendorFromModel, PLAZA_VENDORS } from "@/lib/catalog/vendors";
 import type { PlazaModel } from "@/lib/catalog";
 import { getPublicPortalContent } from "@/lib/portal/content-config";
+import { publishedCatalog } from "@/lib/portal/published-catalog";
+import { PlatformAdminError, requirePlatformAdmin } from "@/lib/platform/admin";
 
 type NativeModelsPayload = {
   data?: Array<{ id?: unknown; owned_by?: unknown }>;
@@ -228,9 +230,20 @@ async function modelsPlaza(): Promise<Response> {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const isImport = new URL(request.url).searchParams.get("scope") === "admin-import";
+  if (isImport) {
+    try { await requirePlatformAdmin(); }
+    catch (error) {
+      return NextResponse.json({ success: false, message: "仅管理员可导入完整目录。" }, { status: error instanceof PlatformAdminError ? error.status : 500 });
+    }
+  }
   const response = await (getAuthMode() === "legacy" ? legacyPlaza() : modelsPlaza());
   // The directory is public product content. A temporarily unavailable gateway
   // must not erase its vendor and model information from the client.
-  return response.ok ? response : fallbackPlaza();
+  const catalog = response.ok ? response : await fallbackPlaza();
+  if (isImport) return catalog;
+  const payload = await catalog.json() as { data?: PlazaModel[] };
+  const content = await getPublicPortalContent();
+  return plazaResponse(publishedCatalog(payload.data ?? [], content.modelVendors), []);
 }

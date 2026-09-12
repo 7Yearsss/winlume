@@ -15,6 +15,7 @@ import { RealModelGrid } from "@/components/RealModelGrid";
 import {
   type PlazaCapabilityFilter,
   vendorsPresentIn,
+  filterPlazaModels,
 } from "@/lib/catalog/plaza-filters";
 import type { PlazaModel } from "@/lib/catalog";
 import { modelDescription, modelPriceLines, modelTags, resolvePlazaVendor } from "@/lib/catalog/plaza-display";
@@ -96,7 +97,7 @@ export default function ProductsExplorer({
     [],
   );
 
-  const vendorChips = useMemo(() => vendorsPresentIn(plazaModels), [plazaModels]);
+  const vendorChips = useMemo(() => vendorsPresentIn(filterPlazaModels(plazaModels, { capability, query })), [plazaModels, capability, query]);
 
   const resetModelFilters = () => {
     setQuery("");
