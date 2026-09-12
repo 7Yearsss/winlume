@@ -27,6 +27,6 @@ export function remainingAllowancePercent(allowance: MonthlyAllowance): number |
   if (allowance.status !== "active") return null;
   if (!/^\d+$/.test(allowance.totalUnits) || !/^\d+$/.test(allowance.remainingUnits)) throw new Error("Invalid allowance units");
   const total = BigInt(allowance.totalUnits), remaining = BigInt(allowance.remainingUnits);
-  if (total <= 0n || remaining > total) throw new Error("Invalid allowance balance");
-  return Number(remaining * 10000n / total) / 100;
+  if (total <= BigInt(0) || remaining > total) throw new Error("Invalid allowance balance");
+  return Number(remaining * BigInt(10000) / total) / 100;
 }
