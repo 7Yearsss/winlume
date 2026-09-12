@@ -23,8 +23,8 @@ vi.mock("@/lib/platform/auth", () => ({
   passwordWouldBeTruncatedByBcrypt: vi.fn(() => false),
 }));
 
-vi.mock("@/lib/newapi/admin-client", () => ({
-  getNewApiUserQuota: mocks.getNewApiUserQuota,
+vi.mock("@/lib/gateway/workspace", () => ({
+  workspaceGateway: () => ({ balance: () => mocks.getNewApiUserQuota(42) }),
 }));
 
 import { GET } from "./route";

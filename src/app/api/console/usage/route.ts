@@ -7,7 +7,8 @@ import {
 } from "@/lib/console/server";
 import { requireConsoleOrganization } from "@/lib/console/workspace";
 import { decryptSecret } from "@/lib/newapi/crypto";
-import { getNewApiUserQuota } from "@/lib/newapi/admin-client";
+import { workspaceGateway } from "@/lib/gateway/workspace";
+import { requirePlatformDb } from "@/lib/platform/db/client";
 import { getTokenUsage } from "@/lib/newapi/team-client";
 import { cachedTokenUsage, type ConsoleTokenUsageItem } from "./token-usage-cache";
 
@@ -41,7 +42,7 @@ export async function GET(request: Request) {
       throw new ConsoleRequestError("工作区未关联额度账户。", 409, "team_mapping_missing");
     }
 
-    const { quota, usedQuota } = await getNewApiUserQuota(mapping.newApiUserId);
+    const { quota, usedQuota } = await workspaceGateway(requirePlatformDb(), organizationId).balance();
     const keyRecords = await context.repositories.apiKeys.listForOrganization(organizationId);
 
     const items: ConsoleTokenUsageItem[] = await Promise.all(

@@ -36,7 +36,13 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     const { id } = await context.params;
     const requestContext = await requireConsoleContext();
     await loadManagedKey(requestContext, id);
-    const input = parseConsoleKeyPatchInput(await request.json());
+    const body = await request.json();
+    if (body?.status === "active" || body?.status === "disabled") {
+      const key = await requestContext.repositories.apiKeys.setEnabled(id, body.status === "active");
+      if (!key) throw new ConsoleRequestError("未找到该 API Key。", 404, "api_key_not_found");
+      return consoleJson({ key: mapConsoleApiKey(key) });
+    }
+    const input = parseConsoleKeyPatchInput(body);
     const updated = await requestContext.repositories.apiKeys.update(id, {
       name: input.name,
       expiresAt: input.expiresAt,

@@ -3,7 +3,7 @@
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import { Check, Copy, KeyRound, Pencil, Plus, RefreshCw, ShieldAlert, Trash2 } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { createConsoleKey, listConsoleKeys, revokeConsoleKey, updateConsoleKey } from "@/lib/console/client";
+import { createConsoleKey, importConsoleKeys, listConsoleKeys, revokeConsoleKey, setConsoleKeyEnabled, updateConsoleKey } from "@/lib/console/client";
 import type { ConsoleApiKey, ConsoleOrganization } from "@/lib/console/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -270,6 +270,9 @@ export default function ConsoleKeysContent() {
   const [batchRevoking, setBatchRevoking] = useState(false);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [keyStats, setKeyStats] = useState({ active: 0, expiringSoon: 0, revoked: 0 });
+  const [importing, setImporting] = useState(false);
+  const [studioStatus, setStudioStatus] = useState("unknown");
+  const [notice, setNotice] = useState("");
 
   function applyKeys(next: ConsoleApiKey[]) {
     setKeys(next);
@@ -296,6 +299,7 @@ export default function ConsoleKeysContent() {
       applyKeys(result.keys);
       setError(result.syncWarning ?? null);
       setOrganizations(result.organizations);
+      setStudioStatus(result.studioStatus);
       setOrganizationId(result.organizationId);
       setRowSelection({});
     } catch (reason) {
@@ -313,6 +317,17 @@ export default function ConsoleKeysContent() {
   const activeOrganization = organizationId ? organizations.find((org) => org.id === organizationId) ?? null : null;
   const canManage = activeOrganization?.role === "owner" || activeOrganization?.role === "admin";
 
+  async function importKeys() {
+    if (!organizationId) return;
+    setImporting(true); setNotice(""); setError(null);
+    try {
+      const result = await importConsoleKeys(organizationId);
+      await load(organizationId);
+      setNotice(`已纳管 ${result.imported} 把历史密钥，可在这里编辑和撤销。`);
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "历史密钥纳管失败。"); }
+    finally { setImporting(false); }
+  }
+
   async function revoke(key: ConsoleApiKey) {
     if (!window.confirm(`撤销 “${key.name}” 后，使用它的应用会立即失去访问权限。是否继续？`)) return;
     setRevoking(key.id);
@@ -324,6 +339,15 @@ export default function ConsoleKeysContent() {
     } finally {
       setRevoking(null);
     }
+  }
+
+  async function toggleKey(key: ConsoleApiKey) {
+    setRevoking(key.id);
+    try {
+      const result = await setConsoleKeyEnabled(key.id, key.status === "disabled");
+      applyKeys(keys.map(item => item.id === key.id ? result.key : item));
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "密钥状态更新失败。"); }
+    finally { setRevoking(null); }
   }
 
   const selectedActiveKeys = keys.filter((key) => rowSelection[key.id] && key.status === "active" && key.source !== "new-api");
@@ -364,7 +388,7 @@ export default function ConsoleKeysContent() {
       {
         accessorKey: "name",
         header: ({ column }) => <DataTableColumnHeader column={column} title="名称" />,
-        cell: ({ row }) => <span className="font-medium text-ink-950">{row.original.name}{row.original.source === "new-api" ? <Badge variant="outline" className="ml-2">new-api</Badge> : null}</span>,
+        cell: ({ row }) => <span className="font-medium text-ink-950">{row.original.name}{row.original.source === "new-api" ? <Badge variant="outline" className="ml-2">待纳管</Badge> : null}</span>,
         meta: { label: "名称" },
       },
       ...(organizationId
@@ -427,10 +451,11 @@ export default function ConsoleKeysContent() {
         header: () => <span className="sr-only">操作</span>,
         cell: ({ row }) => {
           const key = row.original;
-          if (key.source === "new-api") return <span className="text-xs text-muted-foreground">在 new-api 管理</span>;
-          if (key.status !== "active" || !canManage) return null;
+          if (key.source === "new-api") return <span className="text-xs text-muted-foreground">纳管后可编辑</span>;
+          if (key.status === "revoked" || !canManage) return null;
           return (
             <div className="flex justify-end">
+              {key.status === "active" || key.status === "disabled" ? <Button variant="ghost" size="sm" disabled={revoking === key.id} onClick={() => void toggleKey(key)}>{key.status === "disabled" ? "启用" : "停用"}</Button> : null}
               <Button
                 type="button"
                 variant="ghost"
@@ -466,7 +491,7 @@ export default function ConsoleKeysContent() {
   return (
     <ConsolePage
       title="API Keys"
-      description="管理本站密钥，并同步查看当前工作区所关联 new-api 账号的已有 Key。"
+      description="外部程序使用 API Key；工作台登录即可使用，两者共享当前工作区资源。"
       actions={<div className="flex gap-2">
         <Button variant="outline" disabled={loading} onClick={() => void load(organizationId)}>
           <RefreshCw data-icon="inline-start" />刷新
@@ -478,6 +503,17 @@ export default function ConsoleKeysContent() {
         </Button>
       ) : null}</div>}
     >
+      {!loading && organizationId ? <section className="mb-4 rounded-xl border p-4">
+        <div className="flex items-center justify-between gap-4">
+          <div><p className="font-medium">工作台调用</p><p className="mt-1 text-sm text-muted-foreground">系统维护专用凭证，无需手动创建 Key。</p></div>
+          <Badge variant={studioStatus === "ready" ? "success" : "outline"}>{({ ready: "凭证可用", unavailable: "凭证需修复", missing: "尚未配置", unknown: "状态暂不可用" } as Record<string, string>)[studioStatus]}</Badge>
+        </div>
+      </section> : null}
+      {canManage && keys.some(key => key.source === "new-api") ? <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border p-4">
+        <p className="text-sm">发现历史密钥，纳管后可在 Reizo 统一管理，原密钥与限制保留。</p>
+        <Button variant="outline" disabled={importing || loading} onClick={() => void importKeys()}>{importing ? <Spinner /> : null}纳管历史密钥</Button>
+      </div> : null}
+      {notice ? <p role="status" className="mb-4 text-sm text-emerald-700">{notice}</p> : null}
       {!loading && organizationId && keys.length > 0 ? (
         <div className="mb-4 grid gap-3 sm:grid-cols-3">
           <StatTile label="可用" value={keyStats.active} icon={KeyRound} tone="success" className="p-4" />

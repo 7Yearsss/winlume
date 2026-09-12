@@ -34,8 +34,8 @@ export default function AccountOverview() {
       <header><h1>个人中心</h1><span>查看账户信息与安全设置</span></header>
       {error ? <p className="portal-account-notice">{error}</p> : null}
       <div className="account-personal-stats">
-        <article><WalletCards aria-hidden /><span>余额</span><strong>¥{fmt(available)}</strong><Link href="/account/wallet">去充值</Link></article>
-        <article><Workflow aria-hidden /><span>已消耗额度</span><strong>{fmt(used)}</strong><Link href="/account/usage">使用明细</Link></article>
+        <article><WalletCards aria-hidden /><span>余额</span><strong>{overview?.wallet.syncStatus === "unavailable" ? "暂不可用" : `¥${fmt(available)}`}</strong><Link href="/account/wallet">去充值</Link></article>
+        <article><Workflow aria-hidden /><span>累计消费</span><strong>{overview?.wallet.syncStatus === "unavailable" ? "暂不可用" : fmt(used)}</strong><Link href="/account/usage">使用明细</Link></article>
         <article><PieChart aria-hidden /><span>会员剩余额度</span><strong>{remaining}%</strong><button type="button" onClick={openMembership}>额度说明</button></article>
       </div>
       <section className="account-personal-panel">

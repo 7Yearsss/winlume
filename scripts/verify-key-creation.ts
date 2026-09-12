@@ -6,6 +6,7 @@ import { users, apiKeys, organizationMemberships } from "../src/lib/platform/db/
 import { ApiKeyRepository } from "../src/lib/platform/repositories/api-keys";
 import { TeamNewApiMappingRepository } from "../src/lib/platform/repositories/team-new-api-mapping";
 import { decryptSecret } from "../src/lib/newapi/crypto";
+import { workspaceGateway } from "../src/lib/gateway/workspace";
 import { fetchTeamToken, findTeamTokenIdByName, revokeTeamToken } from "../src/lib/newapi/team-client";
 
 async function main() {
@@ -18,6 +19,8 @@ async function main() {
   const mapping = await mappings.findByOrganizationId(owner.organizationId);
   if (!mapping) throw new Error("Workspace mapping unavailable");
   const repository = new ApiKeyRepository(db);
+  const balance = await workspaceGateway(db, owner.organizationId).balance();
+  console.log(JSON.stringify({ workspaceBalanceReadable: Number.isFinite(balance.quota) }));
   const upstream = await repository.listUpstreamForOrganization(owner.organizationId);
   const local = await repository.listForOrganization(owner.organizationId);
   const linked = new Set(local.map(key => key.newApiTokenId));
@@ -27,7 +30,7 @@ async function main() {
   const name = `reizo-check-${Date.now()}`;
   let createdId: string | undefined;
   try {
-    const { record } = await repository.create({ userId: owner.id, organizationId: owner.organizationId, name });
+    const { record, plaintext } = await repository.create({ userId: owner.id, organizationId: owner.organizationId, name });
     createdId = record.id;
     const mapping = await new TeamNewApiMappingRepository(db).findByOrganizationId(owner.organizationId);
     if (!mapping || !record.newApiTokenId || !record.newApiKeyCiphertext) throw new Error("Created key mapping missing");
@@ -39,6 +42,12 @@ async function main() {
     const result = await response.json();
     if (!response.ok || !Array.isArray(result.data) || !result.data.length) throw new Error("Created key cannot read the model catalog");
     console.log(JSON.stringify({ created: true, unrestrictedModels: true, group: token.group, availableModelCount: result.data.length }));
+    await repository.setEnabled(record.id, false);
+    const disabled = await repository.findActiveByPlaintext(plaintext);
+    if (disabled) throw new Error("Disabled key remained active");
+    await repository.setEnabled(record.id, true);
+    if (!(await repository.findActiveByPlaintext(plaintext))) throw new Error("Re-enabled key did not become active");
+    console.log("Temporary key enable/disable verified");
   } finally {
     const mapping = await new TeamNewApiMappingRepository(db).findByOrganizationId(owner.organizationId);
     if (mapping) {

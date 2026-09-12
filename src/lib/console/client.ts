@@ -120,10 +120,22 @@ export function submitEpayCashierForm(url: string, params: Record<string, string
 }
 
 export function listConsoleKeys(organizationId?: string | null) {
-  return request<{ keys: ConsoleApiKey[]; organizations: ConsoleOrganization[]; organizationId: string | null; syncWarning?: string }>(
+  return request<{ keys: ConsoleApiKey[]; organizations: ConsoleOrganization[]; organizationId: string | null; syncWarning?: string; studioStatus: "ready" | "unavailable" | "missing" | "unknown" }>(
     `/api/console/keys${organizationQuery(organizationId)}`,
     { cache: "no-store" },
   );
+}
+
+export function importConsoleKeys(organizationId: string) {
+  return request<{ imported: number }>("/api/console/keys/import", {
+    method: "POST", body: JSON.stringify({ organizationId }),
+  });
+}
+
+export function setConsoleKeyEnabled(id: string, enabled: boolean) {
+  return request<{ key: ConsoleApiKey }>(`/api/console/keys/${encodeURIComponent(id)}`, {
+    method: "PATCH", body: JSON.stringify({ status: enabled ? "active" : "disabled" }),
+  });
 }
 
 /** Lighter than listConsoleKeys: skips the key list and owner-name lookups when a page only needs the active workspace. */

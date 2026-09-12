@@ -1,19 +1,10 @@
-import { and, eq, gt, isNull, or } from "drizzle-orm";
+import { and, eq, gt, isNull, or, sql } from "drizzle-orm";
 import type { InferSelectModel } from "drizzle-orm";
 import type { PlatformDatabase } from "../db/client";
 import { apiKeys } from "../db/schema";
 import { generateApiKey, hashApiKey } from "../api-keys";
-import { decryptSecret, encryptSecret } from "../../newapi/crypto";
-import {
-  createTeamToken,
-  listTeamTokens,
-  fetchTeamTokenKey,
-  findTeamTokenIdByName,
-  revokeTeamToken,
-  updateTeamToken,
-  NewApiTeamError,
-} from "../../newapi/team-client";
-import { TeamNewApiMappingRepository } from "./team-new-api-mapping";
+import { encryptSecret } from "../../newapi/crypto";
+import { workspaceGateway } from "../../gateway/workspace";
 import type { ApiKeyStatus } from "../types";
 
 export type ApiKeyRecord = InferSelectModel<typeof apiKeys>;
@@ -31,41 +22,21 @@ export interface CreateApiKeyInput {
 }
 
 export class ApiKeyRepository {
-  private readonly teamMappings: TeamNewApiMappingRepository;
-
-  constructor(private readonly database: PlatformDatabase) {
-    // Must construct after `database` is assigned — field initializers run before
-    // parameter properties, so `new TeamNewApiMappingRepository(this.database)` at
-    // field-init time would pass undefined.
-    this.teamMappings = new TeamNewApiMappingRepository(database);
-  }
-
-  private async withTeamPat<T>(organizationId: string, operation: (pat: string) => Promise<T>): Promise<T> {
-    const mapping = await this.teamMappings.findByOrganizationId(organizationId);
-    if (!mapping) throw new Error("This organization has no linked new-api team account.");
-    try { return await operation(decryptSecret(mapping.newApiPatCiphertext)); }
-    catch (error) {
-      // An explicit 401 means this operation was rejected before execution.
-      // Never replay successful creation, timeouts, or other uncertain writes.
-      if (!(error instanceof NewApiTeamError) || error.status !== 401) throw error;
-      const pat = await this.teamMappings.refreshPatIfUnchanged(organizationId, mapping.newApiPatCiphertext);
-      return operation(pat);
-    }
-  }
+  constructor(private readonly database: PlatformDatabase) {}
 
   async create(input: CreateApiKeyInput): Promise<{ record: ApiKeyRecord; plaintext: string }> {
     const name = input.name.trim();
     if (!name) throw new Error("An API key name is required.");
 
-    await this.withTeamPat(input.organizationId, pat => createTeamToken(pat, name, {
+    await workspaceGateway(this.database, input.organizationId).createKey(name, {
       allAvailableGroups: true,
       expiredTime: unixExpiry(input.expiresAt),
       modelLimits: input.allowedModels ?? [],
       allowIps: input.ipAllowlist ?? [],
-    }));
-    const newApiTokenId = await this.withTeamPat(input.organizationId, pat => findTeamTokenIdByName(pat, name));
+    });
+    const newApiTokenId = await workspaceGateway(this.database, input.organizationId).findKey(name);
     if (newApiTokenId === null) throw new Error("new-api token was created but could not be found afterward.");
-    const newApiKey = await this.withTeamPat(input.organizationId, pat => fetchTeamTokenKey(pat, newApiTokenId));
+    const newApiKey = await workspaceGateway(this.database, input.organizationId).revealKey(newApiTokenId);
 
     const generated = generateApiKey();
     const [record] = await this.database
@@ -129,7 +100,38 @@ export class ApiKeyRepository {
   }
 
   async listUpstreamForOrganization(organizationId: string) {
-    return this.withTeamPat(organizationId, pat => listTeamTokens(pat));
+    return workspaceGateway(this.database, organizationId).listKeys();
+  }
+
+  /** Explicit owner/admin action: preserve existing secrets and restrictions. */
+  async importExisting(userId: string, organizationId: string): Promise<number> {
+    const gateway = workspaceGateway(this.database, organizationId);
+    const upstream = await gateway.listKeys();
+    return this.database.transaction(async tx => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${"key-import:" + organizationId}, 0))`);
+      const local = await tx.select().from(apiKeys).where(eq(apiKeys.organizationId, organizationId));
+      const known = new Set(local.map(key => key.newApiTokenId));
+      let count = 0;
+      for (const token of upstream) {
+        if (known.has(token.id)) continue;
+        const secret = await gateway.revealKey(token.id);
+        const [record] = await tx.insert(apiKeys).values({
+          userId, organizationId, name: token.name.slice(0, 120),
+          keyPrefix: secret.slice(0, 9), keyHash: hashApiKey(secret),
+          status: token.status === 2 || token.status === 4 ? "disabled" : "active",
+          allowedModels: token.model_limits_enabled ? (token.model_limits || "").split(",").filter(Boolean) : [],
+          ipAllowlist: (token.allow_ips || "").split(/[\s,]+/).filter(Boolean),
+          newApiTokenId: token.id, newApiKeyCiphertext: encryptSecret(secret),
+          expiresAt: token.expired_time > 0 ? new Date(token.expired_time * 1000) : null,
+          lastUsedAt: token.accessed_time > 0 ? new Date(token.accessed_time * 1000) : null,
+          createdAt: token.created_time > 0 ? new Date(token.created_time * 1000) : new Date(),
+          metadata: { imported: true },
+        }).returning();
+        if (!record) throw new Error("历史密钥纳管失败。");
+        known.add(token.id); count += 1;
+      }
+      return count;
+    });
   }
 
   async setStatus(id: string, status: ApiKeyStatus): Promise<ApiKeyRecord | null> {
@@ -145,19 +147,22 @@ export class ApiKeyRepository {
     return record ?? null;
   }
 
-  /** Marks the key revoked locally, then best-effort revokes the new-api token behind it —
-   * a revoked local key stops working at the proxy regardless of new-api-side state, so a
-   * failure here is logged, not thrown (design doc §5.3). */
-  async revoke(id: string): Promise<ApiKeyRecord | null> {
-    const record = await this.setStatus(id, "revoked");
-    if (record?.newApiTokenId && record.organizationId) {
-      try {
-        await this.withTeamPat(record.organizationId, pat => revokeTeamToken(pat, record.newApiTokenId!));
-      } catch (error) {
-        console.error("Failed to revoke underlying new-api token", { keyId: id, error });
-      }
+  async setEnabled(id: string, enabled: boolean): Promise<ApiKeyRecord | null> {
+    const record = await this.findById(id);
+    if (!record || record.status === "revoked") throw new Error("已撤销的密钥不能重新启用。");
+    if (record.newApiTokenId && record.organizationId) {
+      await workspaceGateway(this.database, record.organizationId).setKeyEnabled(record.newApiTokenId, enabled);
     }
-    return record;
+    return this.setStatus(id, enabled ? "active" : "disabled");
+  }
+
+  /** Imported secrets can still be used upstream: require confirmed revocation. */
+  async revoke(id: string): Promise<ApiKeyRecord | null> {
+    const record = await this.findById(id);
+    if (record?.newApiTokenId && record.organizationId) {
+      await workspaceGateway(this.database, record.organizationId).revokeKey(record.newApiTokenId);
+    }
+    return record ? this.setStatus(id, "revoked") : null;
   }
 
   async touchLastUsed(id: string): Promise<void> {
@@ -179,13 +184,13 @@ export class ApiKeyRepository {
     if (!name) throw new Error("An API key name is required.");
 
     if (existing.newApiTokenId && existing.organizationId) {
-      await this.withTeamPat(existing.organizationId, pat => updateTeamToken(pat, existing.newApiTokenId!, {
-        allAvailableGroups: true,
+      await workspaceGateway(this.database, existing.organizationId).updateKey(existing.newApiTokenId, {
+        allAvailableGroups: existing.metadata?.imported !== true,
         name,
         expiredTime: unixExpiry(input.expiresAt),
         modelLimits: input.allowedModels,
         allowIps: input.ipAllowlist,
-      }));
+      });
     }
 
     const [record] = await this.database

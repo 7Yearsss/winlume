@@ -29,6 +29,7 @@ export async function GET(request: Request) {
     }
     let keys = organizationId ? await listConsoleApiKeys(context, organizationId) : [];
     let syncWarning: string | undefined;
+    let studioStatus: "ready" | "unavailable" | "missing" | "unknown" = "unknown";
     if (organizationId) {
       try {
         const [upstream, records] = await Promise.all([
@@ -37,12 +38,17 @@ export async function GET(request: Request) {
         ]);
         // Include hidden Studio keys in deduplication so they stay hidden.
         const linkedIds = new Set(records.flatMap(record => record.newApiTokenId == null ? [] : [record.newApiTokenId]));
+        const studio = records.find(record => record.isStudioHidden);
+        const remote = studio ? upstream.find(key => key.id === studio.newApiTokenId) : null;
+        studioStatus = !studio ? "missing" : studio.status === "active" && remote?.status === 1
+          && (!studio.expiresAt || studio.expiresAt.getTime() > Date.now())
+          && (remote.expired_time <= 0 || remote.expired_time * 1000 > Date.now()) ? "ready" : "unavailable";
         keys = mergeUpstreamKeys(keys, upstream, linkedIds, organizationId);
       } catch {
         syncWarning = "new-api Key 同步暂时失败，当前仅显示本站记录，请刷新重试。";
       }
     }
-    return consoleJson({ keys, organizations, organizationId, syncWarning });
+    return consoleJson({ keys, organizations, organizationId, syncWarning, studioStatus });
   } catch (error) {
     return consoleError(error);
   }

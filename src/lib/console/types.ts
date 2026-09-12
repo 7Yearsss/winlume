@@ -17,6 +17,8 @@ export type ConsoleApiKey = {
 };
 
 export type ConsoleWallet = {
+  membershipAllowance?: import("../billing/model").MonthlyAllowance;
+  syncStatus?: "ready" | "unavailable";
   availableCredits: number;
   reservedCredits: number;
   usedCredits: number;

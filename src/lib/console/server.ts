@@ -1,7 +1,8 @@
 import { getCurrentUserId } from "@/lib/auth/session";
 import { NewApiTeamError } from "@/lib/newapi/team-client";
 import { DEFAULT_QUOTA_PER_UNIT } from "@/lib/catalog/plaza-display";
-import { getNewApiUserQuota } from "@/lib/newapi/admin-client";
+import { workspaceGateway } from "@/lib/gateway/workspace";
+import { getPlatformDb } from "@/lib/platform/db/client";
 import {
   canManageOrganizationResources,
   getPlatformRepositories,
@@ -204,10 +205,12 @@ function lastUsageDays(days: number): ConsoleUsagePoint[] {
 }
 
 const EMPTY_WALLET = {
+  membershipAllowance: { status: "not_configured" as const },
   availableCredits: 0,
   reservedCredits: 0,
   usedCredits: 0,
   currency: "CNY",
+  syncStatus: "unavailable" as "ready" | "unavailable",
   subscription: {
     name: "按量计费",
     status: "none" as const,
@@ -222,12 +225,16 @@ async function walletFromCurrentOrganization(context: ConsoleRequestContext) {
   const mapping = await context.repositories.teamNewApiMapping.findByOrganizationId(organizationId);
   if (!mapping) return { ...EMPTY_WALLET };
   try {
-    const { quota, usedQuota } = await getNewApiUserQuota(mapping.newApiUserId);
+    const database = getPlatformDb();
+    if (!database) return { ...EMPTY_WALLET };
+    const { quota, usedQuota } = await workspaceGateway(database, organizationId).balance();
     return {
       availableCredits: quota / DEFAULT_QUOTA_PER_UNIT,
       reservedCredits: 0,
       usedCredits: usedQuota / DEFAULT_QUOTA_PER_UNIT,
       currency: "CNY",
+      syncStatus: "ready" as const,
+      membershipAllowance: EMPTY_WALLET.membershipAllowance,
       subscription: EMPTY_WALLET.subscription,
     };
   } catch {

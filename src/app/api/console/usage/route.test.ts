@@ -20,11 +20,13 @@ vi.mock("@/lib/platform", async (importOriginal) => {
   };
 });
 
-vi.mock("@/lib/newapi/admin-client", () => ({
-  getNewApiUserQuota: mocks.getNewApiUserQuota,
+vi.mock("@/lib/gateway/workspace", () => ({
+  workspaceGateway: () => ({ balance: () => mocks.getNewApiUserQuota(42) }),
 }));
+vi.mock("@/lib/platform/db/client", () => ({ requirePlatformDb: () => ({}), getPlatformDb: () => ({}) }));
 
-vi.mock("@/lib/newapi/team-client", () => ({
+vi.mock("@/lib/newapi/team-client", async importOriginal => ({
+  ...await importOriginal<typeof import("@/lib/newapi/team-client")>(),
   getTokenUsage: mocks.getTokenUsage,
 }));
 

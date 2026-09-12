@@ -16,7 +16,10 @@ export async function resolveStudioToken(userId: string): Promise<string> {
   }
 
   const keys = await repositories.apiKeys.listForOrganization(user.currentOrganizationId);
-  const studioKey = keys.find((key) => key.isStudioHidden);
+  const membership = await repositories.organizations.getMembership(user.currentOrganizationId, userId);
+  if (!membership) throw new Error("你已不属于当前工作区，请切换工作区。");
+  const studioKey = keys.find((key) => key.isStudioHidden && key.status === "active"
+    && (!key.expiresAt || key.expiresAt.getTime() > Date.now()));
   if (!studioKey?.newApiKeyCiphertext) {
     throw new Error(`Organization ${user.currentOrganizationId} has no Studio token provisioned.`);
   }

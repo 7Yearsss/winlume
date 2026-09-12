@@ -16,6 +16,7 @@ import {
   verifySignup,
 } from "@/lib/platform/identifier-auth";
 import { consumeRateLimit } from "@/lib/platform/rate-limit";
+import { workspaceGateway } from "@/lib/gateway/workspace";
 
 // The response depends on the Auth.js session cookie and must never be
 // statically rendered or reused between visitors.
@@ -324,12 +325,11 @@ export async function GET(_request: NextRequest, context: RouteContext<"/api/acc
   if (!mapping) {
     return NextResponse.json({ success: false, message: "工作区未关联额度账户。" }, { status: 409 });
   }
-  const { getNewApiUserQuota } = await import("@/lib/newapi/admin-client");
   // Balance synchronization is optional account metadata, not authentication.
   // Leave it absent on failure so the UI shows syncing instead of a false zero.
   let balance: { quota?: number; used_quota?: number } = {};
   try {
-    const { quota, usedQuota } = await getNewApiUserQuota(mapping.newApiUserId);
+    const { quota, usedQuota } = await workspaceGateway(database, platformUser.currentOrganizationId).balance();
     balance = { quota, used_quota: usedQuota };
   } catch (error) {
     console.error("Reizo account balance sync failed", {

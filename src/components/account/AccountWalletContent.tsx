@@ -24,6 +24,7 @@ import { StatTile } from "@/components/ui/stat-tile";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { DEFAULT_QUOTA_PER_UNIT } from "@/lib/catalog/plaza-display";
+import { remainingAllowancePercent } from "@/lib/billing/model";
 import {
   createConsoleTopup,
   getConsoleOrganizations,
@@ -209,6 +210,8 @@ export default function AccountWalletContent() {
     ? organizations.find((organization) => organization.id === organizationId) ?? null
     : overview?.activeOrganization ?? null;
   const canManageWallet = activeOrganization?.role === "owner" || activeOrganization?.role === "admin";
+  const allowance = overview?.wallet.membershipAllowance ?? { status: "not_configured" as const };
+  const allowancePercent = remainingAllowancePercent(allowance);
   const available = accountUsage
     ? creditsFromQuota(accountUsage.quota)
     : overview?.wallet.availableCredits ?? 0;
@@ -328,18 +331,20 @@ export default function AccountWalletContent() {
 
       {overview ? (
         <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 lg:max-w-lg">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <StatTile label="会员额度" value={allowancePercent === null ? "尚未配置" : `剩余 ${allowancePercent}%`}
+              hint={allowance.status === "active" ? `重置时间：${new Date(allowance.resetsAt).toLocaleString("zh-CN")}` : "月度额度方案启用后展示剩余比例与重置时间"} />
             <StatTile
-              label="可用额度"
-              value={amount(available)}
-              hint={`${overview.wallet.currency} · 1 元 = 1 积分`}
+              label="充值余额"
+              value={!accountUsage && overview?.wallet.syncStatus === "unavailable" ? "暂不可用" : amount(available)}
+              hint={`${overview.wallet.currency} · 按实际模型用量计费`}
               icon={WalletCards}
               tone="primary"
             />
             <StatTile
               label="累计已用"
-              value={amount(used)}
-              hint="以工作区额度账户为准"
+              value={!accountUsage && overview?.wallet.syncStatus === "unavailable" ? "暂不可用" : amount(used)}
+              hint="以当前工作区实际消费为准"
               icon={TrendingUp}
             />
           </div>

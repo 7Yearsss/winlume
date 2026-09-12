@@ -114,6 +114,17 @@ export async function getTeamRoutingGroups(pat: string): Promise<{ groups: strin
   return { groups: [...new Set([...priority, ...remaining])], maxCount: auto.max_count };
 }
 
+export async function getTeamBalance(pat: string): Promise<{ quota: number; usedQuota: number }> {
+  const response = await fetch(`${baseUrl()}/api/user/self`, {
+    headers: teamHeaders(pat), cache: "no-store", signal: AbortSignal.timeout(5_000),
+  });
+  const data = requireData(await parseEnvelope<{ quota: number; used_quota: number }>(response), response.status);
+  if (!Number.isFinite(data.quota) || !Number.isFinite(data.used_quota)) {
+    throw new NewApiTeamError("模型网关余额数据无效。", 502);
+  }
+  return { quota: data.quota, usedQuota: data.used_quota };
+}
+
 function tokenLimitFields(settings?: TeamTokenSettings) {
   const modelLimits = settings?.modelLimits ?? [];
   const allowIps = settings?.allowIps ?? [];
@@ -288,6 +299,15 @@ export async function revokeTeamToken(pat: string, tokenId: number): Promise<voi
     method: "DELETE",
     headers: teamHeaders(pat),
     cache: "no-store",
+  });
+  await parseEnvelope(response);
+}
+
+export async function setTeamTokenEnabled(pat: string, tokenId: number, enabled: boolean): Promise<void> {
+  const response = await fetch(`${baseUrl()}/api/token/?status_only=true`, {
+    method: "PUT", headers: teamHeaders(pat), cache: "no-store",
+    body: JSON.stringify({ id: tokenId, status: enabled ? 1 : 2 }),
+    signal: AbortSignal.timeout(15_000),
   });
   await parseEnvelope(response);
 }

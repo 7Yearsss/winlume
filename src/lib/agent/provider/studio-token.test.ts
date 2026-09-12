@@ -3,10 +3,11 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("@/lib/platform", () => ({
   getPlatformRepositories: vi.fn(() => ({
     users: { findById: vi.fn(async () => ({ id: "user-1", currentOrganizationId: "org-1" })) },
+    organizations: { getMembership: vi.fn(async () => ({ role: "owner" })) },
     apiKeys: {
       listForOrganization: vi.fn(async () => [
         { id: "key-1", isStudioHidden: false, newApiKeyCiphertext: "enc(other)" },
-        { id: "key-2", isStudioHidden: true, newApiKeyCiphertext: "enc(sk-studio-real)" },
+        { id: "key-2", status: "active", isStudioHidden: true, newApiKeyCiphertext: "enc(sk-studio-real)" },
       ]),
     },
   })),

@@ -58,11 +58,11 @@ beforeEach(() => {
 });
 
 describe("ApiKeyRepository construction", () => {
-  it("passes the database into TeamNewApiMappingRepository (not undefined)", () => {
+  it("passes the database into the gateway's credential repository on use", async () => {
     const database = fakeDatabase({ id: "key-1" });
-    new ApiKeyRepository(database);
-    expect(constructDatabases).toHaveLength(1);
-    expect(constructDatabases[0]).toBe(database);
+    await new ApiKeyRepository(database).create({ userId: "user-1", organizationId: "org-1", name: "test" });
+    expect(constructDatabases.length).toBeGreaterThan(0);
+    expect(constructDatabases.every(value => value === database)).toBe(true);
   });
 });
 
@@ -138,7 +138,7 @@ describe("ApiKeyRepository.update (new-api backed)", () => {
 });
 
 describe("ApiKeyRepository.revoke (new-api backed)", () => {
-  it("best-effort revokes the underlying new-api token", async () => {
+  it("revokes the underlying token before reporting success", async () => {
     const database = fakeDatabase({
       id: "key-1",
       status: "revoked",
@@ -151,7 +151,7 @@ describe("ApiKeyRepository.revoke (new-api backed)", () => {
     expect(revokeTeamToken).toHaveBeenCalledWith("pat", 55);
   });
 
-  it("does not throw when mapping lookup fails", async () => {
+  it("does not report successful revocation when gateway authorization fails", async () => {
     findByOrganizationId.mockRejectedValue(new Error("db down"));
     const database = fakeDatabase({
       id: "key-1",
@@ -160,7 +160,7 @@ describe("ApiKeyRepository.revoke (new-api backed)", () => {
       organizationId: "org-1",
     });
     const repository = new ApiKeyRepository(database);
-    await expect(repository.revoke("key-1")).resolves.toMatchObject({ id: "key-1", status: "revoked" });
+    await expect(repository.revoke("key-1")).rejects.toThrow("db down");
     expect(revokeTeamToken).not.toHaveBeenCalled();
   });
 });
