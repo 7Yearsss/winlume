@@ -17,8 +17,8 @@ type Cycle = "monthly" | "quarterly" | "yearly";
 
 const cycleOptions: Array<{ id: Cycle; label: string; discount: number; hint?: string }> = [
   { id: "monthly", label: "月付", discount: 1 },
-  { id: "quarterly", label: "季度自动续费", discount: 0.9, hint: "约 9 折" },
-  { id: "yearly", label: "年度自动续费", discount: 0.83, hint: "约 83 折" },
+  { id: "quarterly", label: "季付", discount: 0.9, hint: "约 9 折" },
+  { id: "yearly", label: "年付", discount: 0.83, hint: "约 83 折" },
 ];
 
 const plans: Array<{ id: string; name: string; price: number; credits: string; topup: string; fit: string; featured?: boolean }> = [
@@ -99,7 +99,7 @@ export default function MembershipModal({ open, onClose }: { open: boolean; onCl
         <div className="membership-benefits" aria-label="会员权益">
           {benefitItems.map(({ icon: Icon, label }) => <span key={label}><Icon aria-hidden />{label}</span>)}
         </div>
-        <p className="membership-cancel"><ShieldCheck aria-hidden /> 可随时取消自动续费；实际价格与权益以结算页为准。</p>
+        <p className="membership-cancel"><ShieldCheck aria-hidden /> 实际价格与权益以结算页为准。</p>
       </section>
     </Modal>
   );
