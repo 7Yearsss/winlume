@@ -81,7 +81,7 @@ describe("loginAndMintPat", () => {
 });
 
 describe("createTeamToken / findTeamTokenIdByName / fetchTeamTokenKey", () => {
-  it("inherits account routing without snapshotting subscription groups", async () => {
+  it("includes permitted groups missing from global auto routing", async () => {
     const mock = vi.fn(async (url: string) => new Response(JSON.stringify({ success: true, data:
       url.endsWith("/self/groups") ? { auto: {}, gpt: { ratio: .2 }, images: { ratio: .4 }, domestic: { ratio: .3 } } :
       url.endsWith("/auto-groups") ? { groups: ["gpt"], max_count: 5 } : undefined,
@@ -90,16 +90,16 @@ describe("createTeamToken / findTeamTokenIdByName / fetchTeamTokenKey", () => {
     await createTeamToken("pat", "all models", { allAvailableGroups: true });
     const body = JSON.parse((mock.mock.calls.at(-1) as unknown as [string, RequestInit])[1].body as string);
     expect(body.model_limits_enabled).toBe(false); expect(body.group).toBe("auto");
-    expect(body).not.toHaveProperty("auto_groups");
-    expect(mock).toHaveBeenCalledTimes(1);
+    expect(body.auto_groups).toEqual(["gpt", "domestic", "images"]);
+    expect(mock).toHaveBeenCalledTimes(3);
   });
-  it("does not apply explicit group limits to inherited routing", async () => {
+  it("rejects oversized routing before creating a partially usable key", async () => {
     const mock = vi.fn(async (url: string) => new Response(JSON.stringify({ success: true, data:
       url.endsWith("/self/groups") ? { gpt: {}, domestic: {} } : { groups: ["gpt"], max_count: 1 },
     })));
     vi.stubGlobal("fetch", mock);
-    await expect(createTeamToken("pat", "all", { allAvailableGroups: true })).resolves.toBeUndefined();
-    expect(mock).toHaveBeenCalledTimes(1);
+    await expect(createTeamToken("pat", "all", { allAvailableGroups: true })).rejects.toThrow("分组数量");
+    expect(mock).toHaveBeenCalledTimes(2);
   });
   it("creates a token with the default auto group and unlimited quota", async () => {
     delete process.env.NEW_API_TOKEN_GROUP;
@@ -169,6 +169,17 @@ describe("createTeamToken / findTeamTokenIdByName / fetchTeamTokenKey", () => {
 });
 
 describe("updateTeamToken", () => {
+  it("repairs routing while preserving quota, expiry and explicit restrictions", async () => {
+    const mock = vi.fn(async (url: string, init?: RequestInit) => new Response(JSON.stringify({ success: true, data:
+      url.endsWith('/self/groups') ? { gpt: {ratio:.2}, claude: {ratio:.4}, auto:{} } :
+      url.endsWith('/auto-groups') ? {groups:['gpt'],max_count:50} :
+      init?.method === 'GET' ? {id:9,name:'restricted',group:'auto',remain_quota:42,unlimited_quota:false,expired_time:1800000000,model_limits_enabled:true,model_limits:'claude-sonnet-5',allow_ips:'203.0.113.10',cross_group_retry:false} : undefined,
+    })));
+    vi.stubGlobal('fetch',mock);
+    await updateTeamToken('pat',9,{name:'restricted',allAvailableGroups:true});
+    const body=JSON.parse((mock.mock.calls.at(-1)![1] as RequestInit).body as string);
+    expect(body).toMatchObject({auto_groups:['gpt','claude'],remain_quota:42,unlimited_quota:false,expired_time:1800000000,model_limits_enabled:true,model_limits:'claude-sonnet-5',allow_ips:'203.0.113.10'});
+  });
   it("loads the current token then PUTs merged limits without resetting quota", async () => {
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       if (init?.method === "GET" || url.endsWith("/api/token/9")) {

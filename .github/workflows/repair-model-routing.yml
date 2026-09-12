@@ -1,0 +1,40 @@
+name: Repair Reizo model routing
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: |
+          npm ci --ignore-scripts
+          node_modules/.bin/esbuild scripts/repair-model-routing.ts --bundle --platform=node --external:pg-native --outfile=/tmp/registration-check.cjs
+      - name: Repair managed keys and verify model access
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > ~/.ssh/key
+          chmod 600 ~/.ssh/key
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          scp -i ~/.ssh/key /tmp/registration-check.cjs "$DEPLOY_USER@$DEPLOY_HOST:/tmp/registration-check.cjs"
+          ssh -i ~/.ssh/key -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'sudo -n bash -s' <<'REMOTE'
+          set -eu
+          set -a
+          . /opt/reizo/.env
+          [ ! -f /etc/reizo/web.env ] || . /etc/reizo/web.env
+          set +a
+          cd /opt/reizo
+          cp /tmp/registration-check.cjs .registration-check.cjs
+          trap 'rm -f /opt/reizo/.registration-check.cjs /tmp/registration-check.cjs' EXIT
+          node .registration-check.cjs
+          REMOTE
+

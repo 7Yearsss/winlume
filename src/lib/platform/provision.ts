@@ -69,7 +69,7 @@ export async function provisionPlatformUser(
 
   try {
     const pat = await loginAndMintPat(newApiUsername, newApiPassword);
-    await createTeamToken(pat, STUDIO_TOKEN_NAME);
+    await createTeamToken(pat, STUDIO_TOKEN_NAME, { allAvailableGroups: true });
     const studioTokenId = await findTeamTokenIdByName(pat, STUDIO_TOKEN_NAME);
     if (studioTokenId === null) {
       throw new Error("Studio token was created but could not be found afterward.");

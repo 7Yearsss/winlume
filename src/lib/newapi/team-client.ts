@@ -125,6 +125,15 @@ export async function getTeamBalance(pat: string): Promise<{ quota: number; used
   return { quota: data.quota, usedQuota: data.used_quota };
 }
 
+async function allPermittedRouting(pat: string) {
+  const { groups, maxCount } = await getTeamRoutingGroups(pat);
+  if (!groups.length) throw new NewApiTeamError("账户暂无可用模型分组。", 400);
+  if (!Number.isInteger(maxCount) || groups.length > maxCount) {
+    throw new NewApiTeamError("可用分组数量超过网关限制，请管理员调整后重试。", 400);
+  }
+  return { group: "auto", auto_groups: groups, cross_group_retry: true };
+}
+
 function tokenLimitFields(settings?: TeamTokenSettings) {
   const modelLimits = settings?.modelLimits ?? [];
   const allowIps = settings?.allowIps ?? [];
@@ -142,8 +151,7 @@ export async function createTeamToken(
   settings?: TeamTokenSettings,
 ): Promise<void> {
   const group = settings?.allAvailableGroups ? "auto" : defaultTokenGroup();
-  // Omit auto_groups: new-api then inherits subscription-expanded account
-  // routing. Explicit snapshots use narrower group validation and freeze access.
+  const routing = settings?.allAvailableGroups ? await allPermittedRouting(pat) : {};
   const response = await fetch(`${baseUrl()}/api/token/`, {
     method: "POST",
     headers: teamHeaders(pat),
@@ -153,6 +161,7 @@ export async function createTeamToken(
       remain_quota: 0,
       unlimited_quota: true,
       cross_group_retry: group === "auto",
+      ...routing,
       ...tokenLimitFields(settings),
     }),
     cache: "no-store",
@@ -249,6 +258,7 @@ export async function updateTeamToken(
   settings: { name: string } & TeamTokenSettings,
 ): Promise<void> {
   const current = await fetchTeamToken(pat, tokenId);
+  const routing = settings.allAvailableGroups ? await allPermittedRouting(pat) : {};
   const response = await fetch(`${baseUrl()}/api/token/`, {
     method: "PUT",
     headers: teamHeaders(pat),
@@ -259,10 +269,10 @@ export async function updateTeamToken(
       remain_quota: current.remainQuota,
       unlimited_quota: current.unlimitedQuota,
       cross_group_retry: current.crossGroupRetry,
-      ...(settings.allAvailableGroups && current.group === "auto" ? { auto_groups: [] } : {}),
+      ...routing,
       ...tokenLimitFields({
         expiredTime: settings.expiredTime ?? current.expiredTime,
-        modelLimits: settings.modelLimits ?? current.modelLimits.split(",").filter(Boolean),
+        modelLimits: settings.modelLimits ?? (current.modelLimitsEnabled ? current.modelLimits.split(",").filter(Boolean) : []),
         allowIps: settings.allowIps ?? current.allowIps.split(",").filter(Boolean),
       }),
     }),
