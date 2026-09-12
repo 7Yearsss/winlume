@@ -1,5 +1,5 @@
-import PortalContentAdminContent from "@/components/account/PortalContentAdminContent";
+import { redirect } from "next/navigation";
 
 export default function ModelProvidersPage() {
-  return <PortalContentAdminContent initialSection="models" />;
+  redirect("/account/portal?section=models");
 }

@@ -825,9 +825,10 @@ function CapabilityShowcaseManager({
   );
 }
 
-function VendorEditor({ vendors, catalogVendors, onChange, onSave, saving }: {
+function VendorEditor({ vendors, catalogVendors, onChange, onSave, saving, onLoadCatalog, catalogLoading, catalogLoaded, catalogError }: {
   vendors: Vendor[]; catalogVendors: Vendor[]; onChange: (next: Vendor[]) => void;
   onSave: () => void; saving: boolean;
+  onLoadCatalog: () => void; catalogLoading: boolean; catalogLoaded: boolean; catalogError: string;
 }) {
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -902,12 +903,14 @@ function VendorEditor({ vendors, catalogVendors, onChange, onSave, saving }: {
         {!visible.length && <p className="px-4 py-10 text-center text-sm text-muted-foreground">{vendors.length ? "没有匹配的提供商，试试其他关键词或分类。" : "尚未添加提供商，点击“新增提供商”开始。"}</p>}
       </div>
       <div className="flex items-center justify-between text-sm text-muted-foreground"><span>共 {filtered.length} 条 · 每页 8 条</span><div className="flex items-center gap-3"><Button type="button" variant="outline" size="sm" aria-label="提供商上一页" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}><ChevronLeft className="h-4 w-4" /></Button><span>{currentPage} / {pages}</span><Button type="button" variant="outline" size="sm" aria-label="提供商下一页" disabled={currentPage >= pages} onClick={() => setPage(currentPage + 1)}><ChevronRight className="h-4 w-4" /></Button></div></div>
-      <details className="rounded-xl border border-dashed border-border p-4">
-        <summary className="cursor-pointer text-sm font-medium">从已同步目录导入 · {catalogVendors.length} 条提供商分类</summary>
+      <details className="rounded-xl border border-dashed border-border p-4" onToggle={(event) => { if (event.currentTarget.open) onLoadCatalog(); }}>
+        <summary className="cursor-pointer text-sm font-medium">从已同步目录导入{catalogLoaded ? ` · ${catalogVendors.length} 条提供商分类` : ""}</summary>
+        {catalogLoading && <p role="status" className="mt-3 text-sm text-muted-foreground">正在读取可导入目录…</p>}
+        {catalogError && <div role="alert" className="mt-3 flex items-center gap-3 text-sm text-red-600"><span>{catalogError}</span><Button type="button" variant="outline" size="sm" onClick={onLoadCatalog}>重试导入目录</Button></div>}
         <input aria-label="搜索可导入提供商" placeholder="搜索可导入提供商" value={importQuery} onChange={(event) => setImportQuery(event.target.value)} className="mt-3 h-9 w-full rounded-md border border-border bg-background px-3 text-sm" />
         <div className="mt-3 grid max-h-72 gap-2 overflow-y-auto">
           {importCandidates.map((vendor) => <div key={`${vendor.key}-${vendor.category}`} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background p-3"><div className="flex items-center gap-3"><img src={vendor.logoUrl} alt="" className="h-7 w-7 object-contain" /><div className="text-sm"><strong>{vendor.name}</strong><span className="ml-2 text-muted-foreground">{categoryLabel(vendor.category)} · {vendor.models.length} 个模型</span></div></div><Button type="button" variant="outline" size="sm" disabled={saving || vendors.length >= 80 || vendors.some((item) => item.key === vendor.key && item.category === vendor.category)} onClick={() => openEditor({ ...vendor, id: uid("vendor") })}>{vendors.some((item) => item.key === vendor.key && item.category === vendor.category) ? "已添加" : "导入并编辑"}</Button></div>)}
-          {!importCandidates.length && <p className="py-3 text-sm text-muted-foreground">暂无可导入的提供商。</p>}
+          {catalogLoaded && !importCandidates.length && <p className="py-3 text-sm text-muted-foreground">暂无可导入的提供商。</p>}
         </div>
       </details>
       <Dialog open={draft !== null} onOpenChange={(open) => { if (!open) setDraft(null); }}>
@@ -1007,6 +1010,9 @@ export default function PortalContentAdminContent({ initialSection = "carousel" 
   const { account, accountLoading } = useModals();
   const [content, setContent] = useState<PortalContent>(emptyContent);
   const [catalogVendors, setCatalogVendors] = useState<Vendor[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(false);
+  const [catalogLoaded, setCatalogLoaded] = useState(false);
+  const [catalogError, setCatalogError] = useState("");
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<PortalAdminSection>(initialSection);
   const [savingSection, setSavingSection] = useState<PortalAdminSection | null>(null);
@@ -1016,16 +1022,10 @@ export default function PortalContentAdminContent({ initialSection = "carousel" 
     setLoading(true);
     setError("");
     try {
-      const [settings, catalog] = await Promise.all([
-        fetch(`/api/admin/portal-content?v=${Date.now()}`, {
+      const settings = await fetch(`/api/admin/portal-content?v=${Date.now()}`, {
           credentials: "same-origin",
           cache: "no-store",
-        }),
-        fetch("/api/catalog/plaza?scope=admin-import", {
-          credentials: "same-origin",
-          cache: "no-store",
-        }),
-      ]);
+        });
       const body = await readPortalResponse<PortalContent & {
         error?: string;
       }>(settings);
@@ -1037,16 +1037,29 @@ export default function PortalContentAdminContent({ initialSection = "carousel" 
         applicationShowcase: body.applicationShowcase ?? [],
         capabilityShowcase: body.capabilityShowcase ?? [],
       });
-      const payload = (await catalog.json().catch(() => null)) as {
-        data?: CatalogModel[];
-      } | null;
-      setCatalogVendors(groupCatalog(payload?.data ?? []));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "加载失败");
     } finally {
       setLoading(false);
     }
   }, []);
+  const loadCatalog = async () => {
+    if (catalogLoading || catalogLoaded) return;
+    setCatalogLoading(true);
+    setCatalogError("");
+    try {
+      const response = await fetch("/api/catalog/plaza?scope=admin-import", {
+        credentials: "same-origin", cache: "no-store", signal: AbortSignal.timeout(15_000),
+      });
+      if (!response.ok) throw new Error("目录暂时无法读取，请重试。");
+      const payload = await response.json() as { success?: boolean; data?: CatalogModel[] };
+      if (!payload.success || !Array.isArray(payload.data)) throw new Error("目录返回异常，请重试。");
+      setCatalogVendors(groupCatalog(payload.data));
+      setCatalogLoaded(true);
+    } catch (reason) {
+      setCatalogError(reason instanceof Error && reason.name === "TimeoutError" ? "模型目录响应超时，请稍后重试。" : "目录暂时无法读取，请重试。");
+    } finally { setCatalogLoading(false); }
+  };
   useEffect(() => {
     if (account?.platform_role !== "admin") return;
     const timer = window.setTimeout(() => {
@@ -1162,7 +1175,7 @@ export default function PortalContentAdminContent({ initialSection = "carousel" 
                   key={id}
                   type="button"
                   className={`portal-admin-section-tab${activeSection === id ? " is-active" : ""}`}
-                  onClick={() => setActiveSection(id)}
+                  onClick={() => { setActiveSection(id); window.history.replaceState(null, "", `/account/portal?section=${id}`); }}
                   aria-current={activeSection === id ? "page" : undefined}
                 >
                   <span className="portal-admin-section-icon"><Icon aria-hidden /></span>
@@ -1382,6 +1395,10 @@ export default function PortalContentAdminContent({ initialSection = "carousel" 
           {activeSection === "models" ? <VendorEditor
             vendors={content.modelVendors}
             catalogVendors={catalogVendors}
+            onLoadCatalog={() => void loadCatalog()}
+            catalogLoading={catalogLoading}
+            catalogLoaded={catalogLoaded}
+            catalogError={catalogError}
             onChange={(modelVendors) =>
               setContent((current) => ({ ...current, modelVendors }))
             }
