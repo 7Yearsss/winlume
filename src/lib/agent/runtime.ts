@@ -5,6 +5,7 @@
 
 import { randomUUID } from "node:crypto";
 import { isImageGenerationModel } from "@/lib/studio/image-model";
+import { loadCapabilityCatalog } from "@/lib/studio/capabilities.server";
 import type {
   AgentSseEvent,
   Artifact,
@@ -857,6 +858,17 @@ export async function* runAgentTurn(
           parsedInput,
           result: { ok: false, summary: message, content: message },
         };
+      }
+      if (call.name === "generate_image") {
+        const catalog = await loadCapabilityCatalog({ authToken: studioToken });
+        const imageModels = catalog.models.filter(isImageGenerationModel);
+        const preferred = normalizeComposerOptions(opts.metadata?.composerOptions)?.imageModel;
+        const args = parsedInput && typeof parsedInput === "object" ? parsedInput as Record<string, unknown> : {};
+        const selected = preferred ?? (typeof args.model === "string" && imageModels.includes(args.model) ? args.model : imageModels[0]);
+        if (!selected || !imageModels.includes(selected)) {
+          return { call, parsedInput, result: { ok: false, summary: "当前账户没有可用的所选图片模型，请在高级设置中重新选择。", content: "Selected image model is unavailable. Do not claim an image was generated." } };
+        }
+        parsedInput = { ...args, model: selected };
       }
       const result = await executeStudioTool(
         call.name,

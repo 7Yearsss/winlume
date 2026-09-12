@@ -9,6 +9,9 @@ import { runAgentTurn } from "./runtime";
 vi.mock("@/lib/agent/provider/studio-token", () => ({
   resolveStudioToken: vi.fn(async () => "sk-test-studio"),
 }));
+vi.mock("@/lib/studio/capabilities.server", () => ({
+  loadCapabilityCatalog: vi.fn(async () => ({models:["gpt-image-2","gpt-image-2.5"]})),
+}));
 
 const providerMocks = vi.hoisted(() => ({
   invokeToolCapability: vi.fn(),
@@ -29,6 +32,22 @@ vi.mock("@/lib/agent/provider/gateway", async (importOriginal) => {
 
 describe("runAgentTurn chunk mapping", () => {
   const directories: string[] = [];
+  it.each([undefined, "gpt-image-2.5"])("keeps the text model and generates using the available image preference %s", async (imageModel) => {
+    const root=mkdtempSync(join(tmpdir(),"reizo-text-to-image-")); directories.push(root);
+    const store=createWebFileStore(root);
+    await store.sessions.createSession({id:"session-image-tool",userId:"user-1",title:"对话",model:"claude-sonnet-5"});
+    gatewayMocks.generateImage.mockResolvedValue([{bytes:Buffer.from("png"),mimeType:"image/png"}]);
+    let round=0;
+    const streamChat: GatewayChatStream=async function* (params) {
+      expect(params.model).toBe("claude-sonnet-5");
+      if(round++===0) yield {kind:"tool_calls",calls:[{id:"image-call",name:"generate_image",arguments:JSON.stringify({name:"小狗",prompt:"一只小狗",model:"invented-model",size:"1024x1024",count:1})}]};
+      else yield {kind:"text",text:"图片任务已提交。"};
+    };
+    for await(const _ of runAgentTurn({userId:"user-1",sessionId:"session-image-tool",userText:"生成一只小狗",metadata:{composerOptions:{mode:"chat",imageModel}},sessions:store.sessions,artifacts:store.artifacts,streamChat})) { /* consume */ }
+    await vi.waitFor(async()=>expect((await store.artifacts.listBySession("user-1","session-image-tool"))[0]?.status).toBe("ready"));
+    expect(gatewayMocks.generateImage).toHaveBeenCalledWith(expect.objectContaining({model:imageModel ?? "gpt-image-2"}));
+    expect((await store.sessions.getSession("user-1","session-image-tool"))?.model).toBe("claude-sonnet-5");
+  });
 
   it("sends selected image models directly to Images API and persists linked results", async () => {
     const root=mkdtempSync(join(tmpdir(),"reizo-direct-image-")); directories.push(root);

@@ -531,6 +531,8 @@ export default function Composer({
   >({});
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [modelPickerOpen, setModelPickerOpen] = useState(false);
+  const [modelSearch, setModelSearch] = useState("");
+  const [generationModel, setGenerationModel] = useState("");
   const [modelPickerVendor, setModelPickerVendor] = useState<string | null>(null);
   const [lastModelPickerVendor, setLastModelPickerVendor] = useState<string | null>(null);
   const [voiceListening, setVoiceListening] = useState(false);
@@ -1670,13 +1672,14 @@ export default function Composer({
         const meta: ComposerSendMeta | undefined =
           selectedIds.length ||
           referencedArtifactIds.length ||
-          effectiveMode !== "chat" ||
+          effectiveMode !== "chat" || generationModel ||
           (!sessionId && (workingImages.length || videos.length || readyWorkbooks.length))
             ? {
-                ...(effectiveMode !== "chat"
+                ...(effectiveMode !== "chat" || generationModel
                   ? {
                       composerOptions: {
                         mode: effectiveMode,
+                        ...(!isImageGenerationModel(model) && generationModel ? { imageModel: generationModel } : {}),
                         ...(effectiveMode === "image" ? { size: imageSize, count: imageCount } : {}),
                         ...(turnTool
                           ? { toolId: turnTool.id, toolParams }
@@ -1772,6 +1775,7 @@ export default function Composer({
     composerMode,
     imageSize,
     imageCount,
+    generationModel,
     onCapabilityPresetChange,
     turnTool,
     turnToolParams,
@@ -2856,7 +2860,7 @@ export default function Composer({
                       disabled={disabled}
                     />
                   ) : (
-                    <div ref={modelPickerRef} className="composer-model-picker-anchor">
+                      <div ref={modelPickerRef} className="composer-model-picker-anchor">
                       <button
                         type="button"
                         disabled={disabled || modelsLoading}
@@ -2879,10 +2883,21 @@ export default function Composer({
                         <div
                           className="composer-model-picker"
                           data-view={browsingVendor ? "models" : "vendors"}
-                          role="listbox"
+                          role="dialog"
                           aria-label={browsingVendor ? browsingVendor.name : "选择厂商"}
                         >
-                          <div className="composer-model-stack">
+                          <input aria-label="搜索模型或提供商" placeholder="搜索模型或提供商…" value={modelSearch} onChange={(event) => setModelSearch(event.target.value)} className="composer-model-search" />
+                          {modelSearch.trim() ? (
+                            <div className="composer-model-search-results" role="listbox" aria-label="搜索结果">
+                              {modelVendorGroups.flatMap(vendor => vendor.models.filter(name => `${name} ${vendor.name}`.toLowerCase().includes(modelSearch.trim().toLowerCase())).map(name => (
+                                <button key={name} type="button" role="option" aria-selected={name === model} onClick={() => { onModelChange(name); setModelPickerOpen(false); setSettingsOpen(false); setModelSearch(""); }}>
+                                  <VendorMark vendorKey={vendor.key} /><span className="min-w-0 break-all">{name}</span>{name === model ? <Check className="h-3.5 w-3.5 shrink-0" /> : null}
+                                </button>
+                              )))}
+                              {!modelVendorGroups.some(vendor => vendor.models.some(name => `${name} ${vendor.name}`.toLowerCase().includes(modelSearch.trim().toLowerCase()))) ? <p className="p-3 text-sm opacity-60">没有匹配的可用模型</p> : null}
+                            </div>
+                          ) : null}
+                          <div className="composer-model-stack" style={modelSearch.trim() ? { display: "none" } : undefined}>
                             <div
                               className="composer-model-pane"
                               data-pane="vendors"
@@ -2949,6 +2964,7 @@ export default function Composer({
                                           onModelChange(name);
                                           setModelPickerOpen(false);
                                           setModelPickerVendor(null);
+                                          setSettingsOpen(false);
                                         }}
                                       >
                                         <span className="truncate">{name}</span>
@@ -2970,13 +2986,26 @@ export default function Composer({
                     使用模型列表
                   </button>
                 ) : null}
+                {!isImageGenerationModel(model) ? (
+                  <label className="composer-settings-field">
+                    <span>生图模型</span>
+                    <Select value={generationModel || "auto"} onValueChange={value => setGenerationModel(value === "auto" ? "" : value)} disabled={disabled}>
+                      <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                      <SelectContent position="popper" side="top" collisionPadding={12} className="composer-mode-menu">
+                        <SelectItem value="auto">自动选择可用图片模型</SelectItem>
+                        {modelOptions.filter(isImageGenerationModel).map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <small className="opacity-60">保留当前对话模型，需要生图时调用此图片模型。</small>
+                  </label>
+                ) : null}
                 {composerMode === "image" ? (
                   <div className="composer-settings-grid">
                     <label className="composer-settings-field">
                       <span>比例与尺寸</span>
                       <Select value={imageSize} disabled={disabled} onValueChange={(value) => setImageSize(value as ImageSize)}>
                         <SelectTrigger className="!h-[2.65rem] !w-full min-w-0 rounded-[10px] border-line bg-white/70 text-[#241E36]"><SelectValue /></SelectTrigger>
-                        <SelectContent position="popper" align="end" side="bottom" sideOffset={6} avoidCollisions={false} className="composer-mode-menu">
+                        <SelectContent position="popper" align="end" side="top" sideOffset={6} collisionPadding={12} className="composer-mode-menu">
                           {IMAGE_SIZE_OPTIONS.map((option) => (
                             <SelectItem key={option.value} value={option.value}>
                               <span className="inline-flex items-center gap-2">
@@ -2992,7 +3021,7 @@ export default function Composer({
                       <span>生成数量</span>
                       <Select value={String(imageCount)} disabled={disabled} onValueChange={(value) => setImageCount(Number(value) as 1 | 2 | 3 | 4)}>
                         <SelectTrigger className="!h-[2.65rem] !w-full min-w-0 rounded-[10px] border-line bg-white/70 text-[#241E36]"><SelectValue /></SelectTrigger>
-                        <SelectContent position="popper" align="end" side="bottom" sideOffset={6} avoidCollisions={false} className="composer-mode-menu">
+                        <SelectContent position="popper" align="end" side="top" sideOffset={6} collisionPadding={12} className="composer-mode-menu">
                           {[1, 2, 3, 4].map((count) => <SelectItem key={count} value={String(count)}>{count} 张</SelectItem>)}
                         </SelectContent>
                       </Select>
@@ -3015,9 +3044,9 @@ export default function Composer({
               <SelectContent
                 position="popper"
                 align="end"
-                side="bottom"
+                side="top"
                 sideOffset={6}
-                avoidCollisions={false}
+                collisionPadding={12}
                 className="composer-mode-menu"
               >
                 {COMPOSER_MODE_ITEMS.map((item) => {

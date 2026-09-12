@@ -9431,6 +9431,8 @@ html[data-studio-theme="dark"] .composer-model-custom,
   color: #172033;
 }
 .composer-mode-menu {
+  max-height: min(22rem, var(--radix-select-content-available-height, 60dvh)) !important;
+  overflow-y: auto;
   --composer-menu-hover: rgba(15, 23, 42, 0.06);
   min-width: 11.75rem;
   padding: 6px !important;
@@ -10044,6 +10046,36 @@ html[data-studio-theme="dark"] .composer-selected-model-chevron,
   max-width: 100%;
   white-space: nowrap;
   overflow: hidden;
+}
+
+/* Model choices stay inside the collision-aware settings popover. */
+.composer-settings-popover {
+  max-height: min(38rem, var(--radix-popover-content-available-height, calc(100dvh - 24px)));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.composer-settings-popover .composer-model-picker {
+  position: relative !important;
+  inset: auto !important;
+  width: 100% !important;
+  max-height: none !important;
+  margin-top: 8px;
+  box-shadow: none;
+}
+.composer-settings-popover .composer-model-pane,
+.composer-model-search-results {
+  max-height: min(18rem, 40dvh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.composer-model-search {
+  width: calc(100% - 16px);
+  margin: 8px;
+  padding: 9px 10px;
+  border: 1px solid #8994a344;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
 }
 
 .portal-home-dashboard .portal-api-brands {
