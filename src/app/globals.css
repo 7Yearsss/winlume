@@ -7415,8 +7415,19 @@ a.zen-button.zen-button-dark { color: #fff !important; background: #20232d; box-
   scrollbar-width: none;
 }
 .portal-model-vendor-scroller::-webkit-scrollbar { display: none; }
-.portal-model-vendor-scroller button { flex: 0 0 142px; }
-@media (max-width: 760px) { .portal-model-vendor-scroller button { flex-basis: 136px; } }
+.portal-model-vendor-scroller button {
+  flex: 0 0 208px;
+  min-height: 72px;
+  grid-template-columns: 32px minmax(0, 1fr);
+  grid-template-rows: 22px 18px;
+  align-content: center;
+  column-gap: 12px;
+  padding: 12px 16px;
+}
+.portal-model-vendor-scroller button img { width: 32px; height: 32px; align-self: center; }
+.portal-home .portal-model-vendor-scroller button span { font-size: 14px; line-height: 22px; }
+.portal-home .portal-model-vendor-scroller button small { font-size: 12px; line-height: 18px; }
+@media (max-width: 760px) { .portal-model-vendor-scroller button { flex-basis: 184px; } }
 
 /* Task board: a dense operational view for work already started in Studio. */
 .account-task-board { display: grid; gap: 16px; }
