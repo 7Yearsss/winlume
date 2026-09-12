@@ -10039,16 +10039,39 @@ html[data-studio-theme="dark"] .composer-selected-model-chevron,
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  flex: 0 1 auto;
+  min-width: 0;
   max-width: 100%;
-  white-space: normal;
-  overflow: visible;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .portal-home-dashboard .portal-api-brands {
-  flex-wrap: wrap;
-  overflow: visible;
-  row-gap: 6px;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.portal-home-dashboard .portal-api-brand span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.portal-home-dashboard .portal-api-row {
+  grid-template-columns: max-content 1px minmax(0, 1fr) max-content;
+}
+
+.portal-home-dashboard .portal-api-row-more-button {
+  width: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--portal-muted, #6484a7);
+  font: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
 .portal-home-dashboard .portal-api-brand img {

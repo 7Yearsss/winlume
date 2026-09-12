@@ -1022,10 +1022,11 @@ export default function ModelMarket({ initialContent }: { initialContent?: Porta
                     }
                   }}
                   onClick={(event) => {
-                    if ((event.target as HTMLElement).closest("a")) return;
+                    if ((event.target as HTMLElement).closest("a, button")) return;
                     setActiveApiId((current) => current === item.id ? null : item.id);
                   }}
                   onKeyDown={(event) => {
+                    if (event.target !== event.currentTarget) return;
                     if (event.key !== "Enter" && event.key !== " ") return;
                     event.preventDefault();
                     setActiveApiId((current) => current === item.id ? null : item.id);
@@ -1038,19 +1039,29 @@ export default function ModelMarket({ initialContent }: { initialContent?: Porta
                   <span className="portal-api-row-divider" aria-hidden />
                   <div className="portal-api-brands" aria-label={`${item.label}可用模型：${item.brands.map((brand) => brand.label).join("、")}`}>
                     {item.brands.length === 0 && <span className="portal-api-empty">暂无已发布提供商</span>}
-                    {item.brands.slice(0, 4).map((brand) => (
+                    {item.brands.slice(0, 3).map((brand) => (
                       <PortalLink key={brand.label} href={brand.href} className="portal-api-brand">
                         <Image src={brand.icon} alt="" width={16} height={16} unoptimized />
-                        {brand.label}
+                        <span title={brand.label}>{brand.label}</span>
                       </PortalLink>
                     ))}
                   </div>
-                  <PortalLink href={item.href} className="portal-api-row-more" aria-label={`${item.label}更多`}>
+                  {item.brands.length > 3 ? <button
+                    type="button"
+                    className="portal-api-row-more portal-api-row-more-button"
+                    aria-label={`${item.label}更多提供商`}
+                    aria-expanded={activeApiId === item.id}
+                    aria-controls={`portal-api-providers-${item.id}`}
+                    onClick={() => openApiFlyout(item.id)}
+                  >
+                    更多
+                  </button> : <PortalLink href={item.href} className="portal-api-row-more" aria-label={`${item.label}更多`}>
                     <ChevronRight aria-hidden />
-                  </PortalLink>
+                  </PortalLink>}
                   {activeApiId === item.id && item.brands.length > 0 ? (
                     <div
                       className="portal-api-touch-card"
+                      id={`portal-api-providers-${item.id}`}
                       role="dialog"
                       aria-label={`${item.label}热门模型`}
                       onMouseEnter={clearApiFlyoutCloseTimer}
