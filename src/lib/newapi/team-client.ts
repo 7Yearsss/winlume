@@ -36,7 +36,7 @@ async function parseEnvelope<T>(response: Response): Promise<T | undefined> {
   }
   const ok = payload.success ?? payload.code ?? false;
   if (!response.ok || !ok) {
-    throw new NewApiTeamError(payload.message || `new-api request failed (${response.status})`, response.status);
+    throw new NewApiTeamError(payload.message || `new-api request failed (${response.status})`, response.ok ? 400 : response.status);
   }
   return payload.data;
 }
@@ -114,15 +114,6 @@ export async function getTeamRoutingGroups(pat: string): Promise<{ groups: strin
   return { groups: [...new Set([...priority, ...remaining])], maxCount: auto.max_count };
 }
 
-async function allTeamAutoGroups(pat: string): Promise<string[]> {
-  const routing = await getTeamRoutingGroups(pat);
-  if (!routing.groups.length) throw new NewApiTeamError("工作区暂无可用模型分组，请联系管理员配置。", 409);
-  if (!Number.isInteger(routing.maxCount) || routing.groups.length > routing.maxCount) {
-    throw new NewApiTeamError("自动路由分组上限不足，请管理员提高上限后重试。", 409);
-  }
-  return routing.groups;
-}
-
 function tokenLimitFields(settings?: TeamTokenSettings) {
   const modelLimits = settings?.modelLimits ?? [];
   const allowIps = settings?.allowIps ?? [];
@@ -140,7 +131,8 @@ export async function createTeamToken(
   settings?: TeamTokenSettings,
 ): Promise<void> {
   const group = settings?.allAvailableGroups ? "auto" : defaultTokenGroup();
-  const autoGroups = settings?.allAvailableGroups ? await allTeamAutoGroups(pat) : undefined;
+  // Omit auto_groups: new-api then inherits subscription-expanded account
+  // routing. Explicit snapshots use narrower group validation and freeze access.
   const response = await fetch(`${baseUrl()}/api/token/`, {
     method: "POST",
     headers: teamHeaders(pat),
@@ -150,7 +142,6 @@ export async function createTeamToken(
       remain_quota: 0,
       unlimited_quota: true,
       cross_group_retry: group === "auto",
-      ...(autoGroups ? { auto_groups: autoGroups } : {}),
       ...tokenLimitFields(settings),
     }),
     cache: "no-store",
@@ -170,6 +161,41 @@ export type TeamTokenSnapshot = {
   allowIps: string;
   crossGroupRetry: boolean;
 };
+
+export type TeamTokenListItem = {
+  id: number;
+  name: string;
+  status: number;
+  created_time: number;
+  accessed_time: number;
+  expired_time: number;
+  model_limits_enabled: boolean;
+  model_limits: string;
+  allow_ips: string | null;
+  remain_quota: number;
+  used_quota: number;
+  unlimited_quota: boolean;
+};
+
+/** Reads only the PAT owner's tokens. Never forwards keys from upstream. */
+export async function listTeamTokens(pat: string): Promise<TeamTokenListItem[]> {
+  const items: TeamTokenListItem[] = [];
+  for (let page = 1; ; page += 1) {
+    const response = await fetch(`${baseUrl()}/api/token/?p=${page}&page_size=100`, {
+      headers: teamHeaders(pat), cache: "no-store", signal: AbortSignal.timeout(15_000),
+    });
+    const data = requireData(await parseEnvelope<{ items: TeamTokenListItem[]; total: number }>(response), response.status);
+    if (!Array.isArray(data.items) || !Number.isFinite(data.total)) throw new NewApiTeamError("模型服务返回的 Key 列表无效。", 502);
+    for (const token of data.items) {
+      const { id, name, status, created_time, accessed_time, expired_time, model_limits_enabled,
+        model_limits, allow_ips, remain_quota, used_quota, unlimited_quota } = token;
+      items.push({ id, name, status, created_time, accessed_time, expired_time, model_limits_enabled,
+        model_limits, allow_ips, remain_quota, used_quota, unlimited_quota });
+    }
+    if (items.length >= data.total) return items;
+    if (!data.items.length) throw new NewApiTeamError("模型服务的 Key 列表分页不完整，请重试。", 502);
+  }
+}
 
 export async function fetchTeamToken(pat: string, tokenId: number): Promise<TeamTokenSnapshot> {
   const response = await fetch(`${baseUrl()}/api/token/${tokenId}`, {
@@ -212,7 +238,6 @@ export async function updateTeamToken(
   settings: { name: string } & TeamTokenSettings,
 ): Promise<void> {
   const current = await fetchTeamToken(pat, tokenId);
-  const autoGroups = settings.allAvailableGroups && current.group === "auto" ? await allTeamAutoGroups(pat) : undefined;
   const response = await fetch(`${baseUrl()}/api/token/`, {
     method: "PUT",
     headers: teamHeaders(pat),
@@ -223,7 +248,7 @@ export async function updateTeamToken(
       remain_quota: current.remainQuota,
       unlimited_quota: current.unlimitedQuota,
       cross_group_retry: current.crossGroupRetry,
-      ...(autoGroups ? { auto_groups: autoGroups } : {}),
+      ...(settings.allAvailableGroups && current.group === "auto" ? { auto_groups: [] } : {}),
       ...tokenLimitFields({
         expiredTime: settings.expiredTime ?? current.expiredTime,
         modelLimits: settings.modelLimits ?? current.modelLimits.split(",").filter(Boolean),

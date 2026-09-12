@@ -1,4 +1,5 @@
 export type ConsoleApiKey = {
+  source?: "reizo" | "new-api";
   id: string;
   name: string;
   prefix: string;

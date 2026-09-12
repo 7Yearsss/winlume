@@ -8,6 +8,7 @@ import {
   requireConsoleContext,
 } from "@/lib/console/server";
 import { listConsoleOrganizations, requireConsoleOrganization } from "@/lib/console/workspace";
+import { mergeUpstreamKeys } from "@/lib/console/key-sync";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,8 +27,22 @@ export async function GET(request: Request) {
     if (organizationId) {
       await requireConsoleOrganization(context, organizationId);
     }
-    const keys = organizationId ? await listConsoleApiKeys(context, organizationId) : [];
-    return consoleJson({ keys, organizations, organizationId });
+    let keys = organizationId ? await listConsoleApiKeys(context, organizationId) : [];
+    let syncWarning: string | undefined;
+    if (organizationId) {
+      try {
+        const [upstream, records] = await Promise.all([
+          context.repositories.apiKeys.listUpstreamForOrganization(organizationId),
+          context.repositories.apiKeys.listForOrganization(organizationId),
+        ]);
+        // Include hidden Studio keys in deduplication so they stay hidden.
+        const linkedIds = new Set(records.flatMap(record => record.newApiTokenId == null ? [] : [record.newApiTokenId]));
+        keys = mergeUpstreamKeys(keys, upstream, linkedIds, organizationId);
+      } catch {
+        syncWarning = "new-api Key 同步暂时失败，当前仅显示本站记录，请刷新重试。";
+      }
+    }
+    return consoleJson({ keys, organizations, organizationId, syncWarning });
   } catch (error) {
     return consoleError(error);
   }

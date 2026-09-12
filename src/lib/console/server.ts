@@ -53,6 +53,9 @@ export function consoleJson<T>(data: T, init?: ResponseInit): Response {
 }
 
 export function consoleError(error: unknown): Response {
+  if (error instanceof NewApiTeamError && error.status === 400) {
+    return consoleJson({ error: error.message, code: "upstream_key_validation_failed" }, { status: 400 });
+  }
   if (error instanceof NewApiTeamError && error.status === 409) {
     return consoleJson({ error: error.message, code: "team_routing_not_configured" }, { status: 409 });
   }

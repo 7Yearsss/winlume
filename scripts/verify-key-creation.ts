@@ -6,42 +6,25 @@ import { users, apiKeys, organizationMemberships } from "../src/lib/platform/db/
 import { ApiKeyRepository } from "../src/lib/platform/repositories/api-keys";
 import { TeamNewApiMappingRepository } from "../src/lib/platform/repositories/team-new-api-mapping";
 import { decryptSecret } from "../src/lib/newapi/crypto";
-import { fetchTeamToken, findTeamTokenIdByName, revokeTeamToken, getTeamRoutingGroups, NewApiTeamError } from "../src/lib/newapi/team-client";
+import { fetchTeamToken, findTeamTokenIdByName, revokeTeamToken } from "../src/lib/newapi/team-client";
 
 async function main() {
   const db = requirePlatformDb();
-  const [owner] = await db.select({ id: users.id, organizationId: organizationMemberships.organizationId })
+  const [owner] = await db.select({ id: users.id, username: users.username, legacyId: users.legacyNewApiUserId, organizationId: organizationMemberships.organizationId })
     .from(users).innerJoin(organizationMemberships, eq(organizationMemberships.userId, users.id))
-    .where(and(eq(users.platformRole, "admin"), eq(organizationMemberships.role, "owner"))).limit(1);
+    .where(and(eq(users.username, "admin"), eq(organizationMemberships.organizationId, users.currentOrganizationId), eq(organizationMemberships.role, "owner"))).limit(1);
   if (!owner) throw new Error("No admin-owned workspace available for verification");
   const mappings = new TeamNewApiMappingRepository(db);
   const mapping = await mappings.findByOrganizationId(owner.organizationId);
   if (!mapping) throw new Error("Workspace mapping unavailable");
-  let pat = decryptSecret(mapping.newApiPatCiphertext);
-  let routing;
-  try { routing = await getTeamRoutingGroups(pat); }
-  catch (error) {
-    if (!(error instanceof NewApiTeamError) || error.status !== 401) throw error;
-    pat = await mappings.refreshPatIfUnchanged(owner.organizationId, mapping.newApiPatCiphertext);
-    routing = await getTeamRoutingGroups(pat);
-  }
-  console.log(JSON.stringify({ authorizedGroupCount: routing.groups.length, automaticGroupCapacity: routing.maxCount }));
-  if (routing.groups.length > routing.maxCount) {
-    // Raise only the count ceiling needed for this authorized workspace;
-    // group access, pricing, and the global routing priority remain unchanged.
-    const response = await fetch(`${process.env.NEW_API_URL?.replace(/\/+$/, "")}/api/option/`, {
-      method: "PUT", headers: { Authorization: `Bearer ${process.env.NEW_API_ADMIN_TOKEN}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ key: "MaxTokenAutoGroups", value: String(routing.groups.length) }), signal: AbortSignal.timeout(15_000),
-    });
-    const result = await response.json();
-    if (!response.ok || !result.success) {
-      console.log(JSON.stringify({ automaticCapacityUpdateStatus: response.status, upstreamCode: result.code }));
-      throw new Error("Unable to enable all authorized routing groups");
-    }
-    console.log("Automatic group capacity increased to cover this workspace");
-  }
-  const name = `reizo-check-${Date.now()}`;
   const repository = new ApiKeyRepository(db);
+  const upstream = await repository.listUpstreamForOrganization(owner.organizationId);
+  const local = await repository.listForOrganization(owner.organizationId);
+  const linked = new Set(local.map(key => key.newApiTokenId));
+  console.log(JSON.stringify({ username: owner.username, linkedNewApiUsername: mapping.newApiUsername,
+    legacyAccountMatchesWorkspace: owner.legacyId === mapping.newApiUserId,
+    upstreamKeyCount: upstream.length, additionalVisibleKeys: upstream.filter(key => !linked.has(key.id)).length }));
+  const name = `reizo-check-${Date.now()}`;
   let createdId: string | undefined;
   try {
     const { record } = await repository.create({ userId: owner.id, organizationId: owner.organizationId, name });

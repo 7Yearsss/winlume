@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
-import { Check, Copy, KeyRound, Pencil, Plus, ShieldAlert, Trash2 } from "lucide-react";
+import { Check, Copy, KeyRound, Pencil, Plus, RefreshCw, ShieldAlert, Trash2 } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { createConsoleKey, listConsoleKeys, revokeConsoleKey, updateConsoleKey } from "@/lib/console/client";
 import type { ConsoleApiKey, ConsoleOrganization } from "@/lib/console/types";
@@ -294,6 +294,7 @@ export default function ConsoleKeysContent() {
     try {
       const result = await listConsoleKeys(nextOrganizationId);
       applyKeys(result.keys);
+      setError(result.syncWarning ?? null);
       setOrganizations(result.organizations);
       setOrganizationId(result.organizationId);
       setRowSelection({});
@@ -325,7 +326,7 @@ export default function ConsoleKeysContent() {
     }
   }
 
-  const selectedActiveKeys = keys.filter((key) => rowSelection[key.id] && key.status === "active");
+  const selectedActiveKeys = keys.filter((key) => rowSelection[key.id] && key.status === "active" && key.source !== "new-api");
 
   async function revokeSelected() {
     if (selectedActiveKeys.length === 0) return;
@@ -363,7 +364,7 @@ export default function ConsoleKeysContent() {
       {
         accessorKey: "name",
         header: ({ column }) => <DataTableColumnHeader column={column} title="名称" />,
-        cell: ({ row }) => <span className="font-medium text-ink-950">{row.original.name}</span>,
+        cell: ({ row }) => <span className="font-medium text-ink-950">{row.original.name}{row.original.source === "new-api" ? <Badge variant="outline" className="ml-2">new-api</Badge> : null}</span>,
         meta: { label: "名称" },
       },
       ...(organizationId
@@ -398,7 +399,7 @@ export default function ConsoleKeysContent() {
         header: ({ column }) => <DataTableColumnHeader column={column} title="状态" />,
         cell: ({ row }) => (
           <span className={row.original.status === "active" ? "text-emerald-700" : "text-ink-500"}>
-            {row.original.status === "active" ? "可用" : row.original.status === "revoked" ? "已撤销" : "已过期"}
+            {row.original.status === "active" ? "可用" : row.original.status === "revoked" ? "已撤销" : row.original.status === "disabled" ? "已停用" : "已过期"}
           </span>
         ),
         meta: { label: "状态" },
@@ -426,6 +427,7 @@ export default function ConsoleKeysContent() {
         header: () => <span className="sr-only">操作</span>,
         cell: ({ row }) => {
           const key = row.original;
+          if (key.source === "new-api") return <span className="text-xs text-muted-foreground">在 new-api 管理</span>;
           if (key.status !== "active" || !canManage) return null;
           return (
             <div className="flex justify-end">
@@ -464,13 +466,17 @@ export default function ConsoleKeysContent() {
   return (
     <ConsolePage
       title="API Keys"
-      description="创建、限制和撤销密钥。余额和消耗不在这里看。"
-      actions={canManage ? (
+      description="管理本站密钥，并同步查看当前工作区所关联 new-api 账号的已有 Key。"
+      actions={<div className="flex gap-2">
+        <Button variant="outline" disabled={loading} onClick={() => void load(organizationId)}>
+          <RefreshCw data-icon="inline-start" />刷新
+        </Button>
+        {canManage ? (
         <Button onClick={() => { setEditing(null); setShowDialog(true); }}>
           <Plus data-icon="inline-start" />
           新建 Key
         </Button>
-      ) : undefined}
+      ) : null}</div>}
     >
       {!loading && organizationId && keys.length > 0 ? (
         <div className="mb-4 grid gap-3 sm:grid-cols-3">

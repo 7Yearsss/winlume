@@ -6,6 +6,7 @@ import { generateApiKey, hashApiKey } from "../api-keys";
 import { decryptSecret, encryptSecret } from "../../newapi/crypto";
 import {
   createTeamToken,
+  listTeamTokens,
   fetchTeamTokenKey,
   findTeamTokenIdByName,
   revokeTeamToken,
@@ -125,6 +126,10 @@ export class ApiKeyRepository {
    */
   async listForOrganization(organizationId: string): Promise<ApiKeyRecord[]> {
     return this.database.select().from(apiKeys).where(eq(apiKeys.organizationId, organizationId));
+  }
+
+  async listUpstreamForOrganization(organizationId: string) {
+    return this.withTeamPat(organizationId, pat => listTeamTokens(pat));
   }
 
   async setStatus(id: string, status: ApiKeyStatus): Promise<ApiKeyRecord | null> {

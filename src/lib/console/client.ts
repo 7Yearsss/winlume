@@ -120,7 +120,7 @@ export function submitEpayCashierForm(url: string, params: Record<string, string
 }
 
 export function listConsoleKeys(organizationId?: string | null) {
-  return request<{ keys: ConsoleApiKey[]; organizations: ConsoleOrganization[]; organizationId: string | null }>(
+  return request<{ keys: ConsoleApiKey[]; organizations: ConsoleOrganization[]; organizationId: string | null; syncWarning?: string }>(
     `/api/console/keys${organizationQuery(organizationId)}`,
     { cache: "no-store" },
   );
