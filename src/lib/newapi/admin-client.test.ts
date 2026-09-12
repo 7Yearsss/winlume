@@ -6,9 +6,22 @@ import {
   findNewApiUserIdByUsername,
   getNewApiUserQuota,
   NewApiAdminError,
+  updateNewApiModelPricing,
 } from "./admin-client";
 
 const originalEnv = { ...process.env };
+
+describe("updateNewApiModelPricing", () => {
+  it("patches only the selected model through the admin API", async () => {
+    const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ success: true })));
+    vi.stubGlobal("fetch", mock);
+    await updateNewApiModelPricing("vendor/model name", { quota_type: 1, model_price: .5 });
+    expect(mock).toHaveBeenCalledWith("https://v2api.top/api/pricing/admin/models/vendor/model%20name", expect.objectContaining({
+      method: "PATCH", headers: expect.objectContaining({ Authorization: "Bearer admin-pat-123" }),
+      body: JSON.stringify({ quota_type: 1, model_price: .5 }),
+    }));
+  });
+});
 
 beforeEach(() => {
   process.env.NEW_API_URL = "https://v2api.top";

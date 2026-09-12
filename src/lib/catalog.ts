@@ -46,6 +46,8 @@ export interface PlazaModel {
   /** Public or CDN path to the vendor brand mark. */
   vendor_logo?: string;
   quota_type: number;
+  pricing_currency?: "USD";
+  pricing_unavailable?: boolean;
   /** Fixed USD price when quota_type === 1 / mode fixed */
   model_price: number;
   model_ratio: number;

@@ -10063,7 +10063,7 @@ html[data-studio-theme="dark"] .composer-selected-model-chevron,
 }
 
 .portal-home-dashboard .portal-api-row-more-button {
-  width: auto;
+  width: 18px;
   padding: 0;
   border: 0;
   background: transparent;

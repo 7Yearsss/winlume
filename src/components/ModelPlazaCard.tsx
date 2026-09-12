@@ -60,7 +60,7 @@ export function ModelPlazaCard({ model, docsHref, selected, onSelect, variant = 
           <span className="portal-directory-model-hot">热门</span>
         </div>
         <div className="portal-directory-model-tags">{tags.slice(0, 3).map((tag) => <span key={tag.label}>{tag.label}</span>)}</div>
-        <dl className="portal-directory-model-pricing">
+        <dl className="portal-directory-model-pricing" title={model.billing_group ? `美元计价 · ${model.billing_group} 分组（×${model.group_ratio}）；实际扣费按调用分组及缓存等用量计算` : undefined}>
           {price.kind === "ratio" ? <><div><dt>输入</dt><dd>{price.input.replace("输入：", "")}</dd></div><div><dt>输出</dt><dd>{price.output.replace("输出：", "")}</dd></div></> : <div><dt>调用价格</dt><dd>{price.text.replace("价格：", "")}</dd></div>}
         </dl>
       </Link>

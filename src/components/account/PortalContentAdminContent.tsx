@@ -28,6 +28,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { PORTAL_IMAGE_MAX_FILE_BYTES } from "@/lib/portal/content-limits";
+import ModelPricingDialog from "./ModelPricingDialog";
 
 type Category = "llm" | "image" | "audio" | "video" | "embed" | "other";
 type Slide = {
@@ -834,6 +835,7 @@ function VendorEditor({ vendors, catalogVendors, onChange, onSave, saving, onLoa
   const [categoryFilter, setCategoryFilter] = useState("");
   const [page, setPage] = useState(1);
   const [draft, setDraft] = useState<Vendor | null>(null);
+  const [pricingVendor, setPricingVendor] = useState<Vendor | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [modelText, setModelText] = useState("");
   const [draftError, setDraftError] = useState("");
@@ -897,7 +899,7 @@ function VendorEditor({ vendors, catalogVendors, onChange, onSave, saving, onLoa
             <td className="px-4 py-3"><div className="flex items-center gap-3"><img src={vendor.logoUrl || getVendorByKey(vendor.key).logo} alt="" className="h-8 w-8 shrink-0 object-contain" /><div><strong className="block max-w-64 truncate" title={vendor.name}>{vendor.name}</strong><small className="text-muted-foreground">{vendor.key}</small></div></div></td>
             <td className="px-4 py-3">{categoryLabel(vendor.category)}</td><td className="px-4 py-3">{vendor.models.length} 个</td>
             <td className="px-4 py-3"><label className="flex items-center gap-2"><input type="checkbox" disabled={saving} aria-label={`${vendor.name} ${categoryLabel(vendor.category)} 展示`} checked={vendor.enabled} onChange={(event) => onChange(vendors.map((item) => item.id === vendor.id ? { ...item, enabled: event.target.checked } : item))} />{vendor.enabled ? "展示" : "隐藏"}</label></td>
-            <td className="px-4 py-3"><div className="flex justify-end gap-1"><Button type="button" variant="ghost" size="sm" disabled={saving} aria-label={`编辑 ${vendor.name} ${categoryLabel(vendor.category)}`} onClick={() => openEditor(vendor, true)}><Pencil className="h-4 w-4" />编辑</Button><Button type="button" variant="ghost" size="sm" disabled={saving} aria-label={`删除 ${vendor.name} ${categoryLabel(vendor.category)}`} onClick={() => onChange(vendors.filter((item) => item.id !== vendor.id))}><Trash2 className="h-4 w-4 text-red-500" /></Button></div></td>
+            <td className="px-4 py-3"><div className="flex justify-end gap-1"><Button type="button" variant="ghost" size="sm" disabled={saving} onClick={() => setPricingVendor(vendor)}>模型定价</Button><Button type="button" variant="ghost" size="sm" disabled={saving} aria-label={`编辑 ${vendor.name} ${categoryLabel(vendor.category)}`} onClick={() => openEditor(vendor, true)}><Pencil className="h-4 w-4" />编辑</Button><Button type="button" variant="ghost" size="sm" disabled={saving} aria-label={`删除 ${vendor.name} ${categoryLabel(vendor.category)}`} onClick={() => onChange(vendors.filter((item) => item.id !== vendor.id))}><Trash2 className="h-4 w-4 text-red-500" /></Button></div></td>
           </tr>)}</tbody>
         </table>
         {!visible.length && <p className="px-4 py-10 text-center text-sm text-muted-foreground">{vendors.length ? "没有匹配的提供商，试试其他关键词或分类。" : "尚未添加提供商，点击“新增提供商”开始。"}</p>}
@@ -913,6 +915,7 @@ function VendorEditor({ vendors, catalogVendors, onChange, onSave, saving, onLoa
           {catalogLoaded && !importCandidates.length && <p className="py-3 text-sm text-muted-foreground">暂无可导入的提供商。</p>}
         </div>
       </details>
+      {pricingVendor && <ModelPricingDialog vendor={pricingVendor} onClose={() => setPricingVendor(null)} />}
       <Dialog open={draft !== null} onOpenChange={(open) => { if (!open) setDraft(null); }}>
         <DialogContent className="max-h-[85vh] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto bg-white">
           <DialogHeader><DialogTitle>{editingId ? "编辑提供商" : "新增提供商"}</DialogTitle><DialogDescription>选择内置厂商可自动填入图标。完成编辑后，回到列表“保存并发布”。</DialogDescription></DialogHeader>

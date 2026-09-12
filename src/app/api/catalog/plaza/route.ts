@@ -8,6 +8,7 @@ import type { PlazaModel } from "@/lib/catalog";
 import { getPublicPortalContent } from "@/lib/portal/content-config";
 import { publishedCatalog } from "@/lib/portal/published-catalog";
 import { PlatformAdminError, requirePlatformAdmin } from "@/lib/platform/admin";
+import { applyActualPricing, readNewApiPricing } from "@/lib/newapi/pricing";
 
 type NativeModelsPayload = {
   data?: Array<{ id?: unknown; owned_by?: unknown }>;
@@ -232,6 +233,13 @@ async function modelsPlaza(): Promise<Response> {
 
 export async function GET(request: Request) {
   const isImport = new URL(request.url).searchParams.get("scope") === "admin-import";
+  if (!isImport) {
+    const [content, pricing] = await Promise.all([
+      getPublicPortalContent(), readNewApiPricing().catch(() => null),
+    ]);
+    const models = publishedCatalog(pricing?.models ?? [], content.modelVendors);
+    return plazaResponse(pricing ? applyActualPricing(models, pricing) : models.map(model => ({ ...model, pricing_unavailable: true })), []);
+  }
   if (isImport) {
     try { await requirePlatformAdmin(); }
     catch (error) {
@@ -242,8 +250,5 @@ export async function GET(request: Request) {
   // The directory is public product content. A temporarily unavailable gateway
   // must not erase its vendor and model information from the client.
   const catalog = response.ok ? response : await fallbackPlaza();
-  if (isImport) return catalog;
-  const payload = await catalog.json() as { data?: PlazaModel[] };
-  const content = await getPublicPortalContent();
-  return plazaResponse(publishedCatalog(payload.data ?? [], content.modelVendors), []);
+  return catalog;
 }

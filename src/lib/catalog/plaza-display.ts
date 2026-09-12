@@ -116,9 +116,9 @@ export function currencyPerMillionTokens(options: {
   groupRatio?: number;
   quotaPerUnit?: number;
 }): number {
-  const modelRatio = positive(options.modelRatio, 1);
-  const completionRatio = positive(options.completionRatio ?? 1, 1);
-  const groupRatio = positive(options.groupRatio ?? 1, 1);
+  const modelRatio = nonNegative(options.modelRatio, 1);
+  const completionRatio = nonNegative(options.completionRatio ?? 1, 1);
+  const groupRatio = nonNegative(options.groupRatio ?? 1, 1);
   const quotaPerUnit = positive(options.quotaPerUnit ?? DEFAULT_QUOTA_PER_UNIT, DEFAULT_QUOTA_PER_UNIT);
   return (1_000_000 * modelRatio * completionRatio * groupRatio) / quotaPerUnit;
 }
@@ -135,6 +135,8 @@ export function cnyPerMillionTokens(options: {
 }
 
 export function modelPriceLines(model: PlazaModel): PlazaPriceLine {
+  if (model.pricing_unavailable) return { kind: "tiered", text: "价格暂不可用" };
+  const symbol = model.pricing_currency === "USD" ? "$" : "¥";
   const quotaPerUnit = model.quota_per_unit ?? DEFAULT_QUOTA_PER_UNIT;
   const groupRatio = model.group_ratio ?? 1;
 
@@ -146,7 +148,7 @@ export function modelPriceLines(model: PlazaModel): PlazaPriceLine {
     const price = Number.isFinite(model.model_price) ? model.model_price : 0;
     return {
       kind: "fixed",
-      text: `价格：¥${formatCny(price)} /次`,
+      text: `价格：${symbol}${formatCny(price * groupRatio)}${model.group_ratio_is_min ? "起" : ""} /次`,
     };
   }
 
@@ -169,13 +171,17 @@ export function modelPriceLines(model: PlazaModel): PlazaPriceLine {
   const from = model.group_ratio_is_min ? "起" : "";
   return {
     kind: "ratio",
-    input: `输入：¥${formatCny(inputCny)}${from} /1M tokens`,
-    output: `输出：¥${formatCny(outputCny)}${from} /1M tokens`,
+    input: `输入：${symbol}${formatCny(inputCny)}${from} /1M tokens`,
+    output: `输出：${symbol}${formatCny(outputCny)}${from} /1M tokens`,
   };
 }
 
 function positive(value: number, fallback: number): number {
   return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+function nonNegative(value: number, fallback: number): number {
+  return Number.isFinite(value) && value >= 0 ? value : fallback;
 }
 
 function formatCny(value: number): string {

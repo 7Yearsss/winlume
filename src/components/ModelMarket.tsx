@@ -1054,7 +1054,7 @@ export default function ModelMarket({ initialContent }: { initialContent?: Porta
                     aria-controls={`portal-api-providers-${item.id}`}
                     onClick={() => openApiFlyout(item.id)}
                   >
-                    更多
+                    <ChevronRight aria-hidden />
                   </button> : <PortalLink href={item.href} className="portal-api-row-more" aria-label={`${item.label}更多`}>
                     <ChevronRight aria-hidden />
                   </PortalLink>}

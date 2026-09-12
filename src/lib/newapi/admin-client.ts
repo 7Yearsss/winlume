@@ -41,6 +41,12 @@ async function adminRequest<T>(path: string, init: RequestInit): Promise<T | und
   return payload.data;
 }
 
+export async function updateNewApiModelPricing(model: string, pricing: { quota_type: number; model_ratio?: number; completion_ratio?: number; model_price?: number }): Promise<void> {
+  await adminRequest(`/api/pricing/admin/models/${model.split("/").map(encodeURIComponent).join("/")}`, {
+    method: "PATCH", body: JSON.stringify(pricing), signal: AbortSignal.timeout(15_000),
+  });
+}
+
 export async function createNewApiUser(input: {
   username: string;
   password: string;
