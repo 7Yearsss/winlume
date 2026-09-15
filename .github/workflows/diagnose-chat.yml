@@ -1,0 +1,34 @@
+name: Diagnose chat failures
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect sanitized model errors
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > ~/.ssh/key
+          chmod 600 ~/.ssh/key
+          trap 'rm -f ~/.ssh/key' EXIT
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          ssh -i ~/.ssh/key -o BatchMode=yes -o IdentitiesOnly=yes "$DEPLOY_USER@$DEPLOY_HOST" 'sudo -n bash -s' <<'REMOTE'
+          set -eu
+          set -a
+          . /opt/reizo/.env
+          [ ! -f /etc/reizo/web.env ] || . /etc/reizo/web.env
+          set +a
+          cd /opt/reizo
+          node <<'JS'
+          const secrets=Object.entries(process.env).filter(([k,v])=>/TOKEN|KEY|SECRET|PASSWORD/.test(k)&&v.length>5).map(([,v])=>v);
+          function safe(value){let s=String(value??'');for(const secret of secrets)s=s.split(secret).join('[redacted]');return s.replace(/(?:sk-|pat-|wl_)[A-Za-z0-9_-]+/g,'[redacted]').replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]+/g,'[email]').slice(0,800)}
+          (async()=>{for(const path of ['/api/log/?type=5&model_name=gpt-6-astra&p=0&page_size=5','/api/channel/?p=0&page_size=100']){const r=await fetch(process.env.NEW_API_URL.replace(/\/+$/,'')+path,{headers:{Authorization:'Bearer '+process.env.NEW_API_ADMIN_TOKEN},signal:AbortSignal.timeout(15000)});const data=await r.json();const rows=data.data?.items??data.data??[];console.log(JSON.stringify({endpoint:path,status:r.status,success:data.success,message:safe(data.message),items:Array.isArray(rows)?rows.filter(x=>path.includes('/log/')||String(x.models).includes('gpt-6-astra')).map(x=>path.includes('/log/')?{time:x.created_at,model:x.model_name,error:safe(x.content),channel:x.channel,group:x.group}:{id:x.id,status:x.status,group:x.group,models:String(x.models).split(',').filter(m=>m.includes('gpt-6-astra')),type:x.type}):[]}))}})().catch(e=>{console.error(safe(e.message));process.exitCode=1});
+          JS
+          REMOTE
