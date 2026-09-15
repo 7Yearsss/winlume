@@ -1,0 +1,38 @@
+name: Verify production health
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check the running Reizo service and local endpoints
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > ~/.ssh/reizo-verify
+          chmod 600 ~/.ssh/reizo-verify
+          trap 'rm -f ~/.ssh/reizo-verify' EXIT
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          ssh -i ~/.ssh/reizo-verify -o BatchMode=yes -o IdentitiesOnly=yes \
+            -o ConnectTimeout=20 "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
+          set -euo pipefail
+          for attempt in 1 2; do
+            systemctl is-active reizo.service
+            for route in /studio /api/skills '/products?cate=app'; do
+              code=$(curl -sS --max-time 30 -o /dev/null -w '%{http_code}' "http://127.0.0.1:3001$route")
+              echo "$route HTTP $code"
+              test "$code" = 200
+            done
+            if [ "$attempt" = 1 ]; then sleep 5; fi
+          done
+          REMOTE
