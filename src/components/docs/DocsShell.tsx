@@ -83,7 +83,7 @@ export default function DocsShell({ children }: { children: ReactNode }) {
         <Link href="/docs/api" className={pathname === "/docs/api" ? "is-active docs-side-link" : "docs-side-link"} onClick={() => setOpen(false)}><Code2 aria-hidden className="docs-side-ico" />API 参考</Link>
         <Link href="/account/keys" className="docs-side-link" onClick={() => setOpen(false)}>
           <KeyRound aria-hidden className="docs-side-ico" />
-          API Keys
+          API密钥
         </Link>
       </div>
 
@@ -156,7 +156,7 @@ export default function DocsShell({ children }: { children: ReactNode }) {
           </button>
           <Link href="/account/keys" className="docs-shell-bar-link">
             <KeyRound aria-hidden />
-            API Keys
+            API密钥
           </Link>
         </div>
 

@@ -165,12 +165,12 @@ export function ApiEndpointView({ page }: { page: ApiDocPage }) {
         <h2>鉴权</h2>
         <div className="docs-auth-card">
           <p>
-            在请求头携带 API Key：
+            在请求头携带 API密钥：
             <code>Authorization: Bearer sk-xxxxx</code>
           </p>
           <p className="docs-muted-inline">
             在{" "}
-            <Link href="/account/keys">API Keys</Link> 创建密钥，建议写入环境变量{" "}
+            <Link href="/account/keys">API密钥</Link> 创建密钥，建议写入环境变量{" "}
             <code>REIZO_API_KEY</code>。
           </p>
         </div>

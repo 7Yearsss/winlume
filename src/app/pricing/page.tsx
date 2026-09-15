@@ -58,7 +58,7 @@ export default function PricingPage() {
         </section>
 
         <section className="portal-pricing-catalog" aria-labelledby="pricing-catalog-title">
-          <div className="portal-pricing-section-head"><div><p className="portal-eyebrow">PRICE CATALOG</p><h2 id="pricing-catalog-title">按能力选择，再看价格</h2><p>目录展示价格仅作产品选型参考，实际结算以账户用量与网关实时规则为准。</p></div><Link href="/account/keys" className="portal-pricing-key-link"><KeyRound aria-hidden />管理 API Key</Link></div>
+          <div className="portal-pricing-section-head"><div><p className="portal-eyebrow">PRICE CATALOG</p><h2 id="pricing-catalog-title">按能力选择，再看价格</h2><p>目录展示价格仅作产品选型参考，实际结算以账户用量与网关实时规则为准。</p></div><Link href="/account/keys" className="portal-pricing-key-link"><KeyRound aria-hidden />管理 API密钥</Link></div>
           <nav className="portal-pricing-anchors" aria-label="价格分类">{sections.map((category) => <a key={category.slug} href={`#${category.slug}`}><span style={{ backgroundColor: category.color }} />{category.name}</a>)}</nav>
           <div className="portal-pricing-tables">
             {sections.map((category) => {

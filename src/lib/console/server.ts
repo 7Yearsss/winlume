@@ -179,7 +179,7 @@ export async function getOrganizationUsageRollup(
 /** Same permission tier team.ts uses for member management (owner/admin), scoped to API keys. */
 export function ensureOrganizationKeyManager(role: OrganizationRole): void {
   if (!canManageOrganizationResources(role)) {
-    throw new ConsoleRequestError("只有工作区 owner 或 admin 可以管理工作区 API Key。", 403, "organization_key_forbidden");
+    throw new ConsoleRequestError("只有工作区 owner 或 admin 可以管理工作区 API密钥。", 403, "organization_key_forbidden");
   }
 }
 
@@ -357,7 +357,7 @@ export function parseConsoleKeyInput(value: unknown): {
   }
   const input = value as Record<string, unknown>;
   if (typeof input.organizationId !== "string" || !input.organizationId.trim()) {
-    throw new ConsoleRequestError("创建 API Key 需要指定工作区。", 400, "organization_id_required");
+    throw new ConsoleRequestError("创建 API密钥 需要指定工作区。", 400, "organization_id_required");
   }
   return {
     name: parseConsoleKeyName(input.name),

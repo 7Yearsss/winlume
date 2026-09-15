@@ -56,7 +56,7 @@ export function pageToMarkdown(page: ApiDocPage, pageUrl?: string): string {
     "",
     "## 鉴权",
     "",
-    "请求头携带 API Key：",
+    "请求头携带 API密钥：",
     "",
     "```http",
     "Authorization: Bearer sk-xxxxx",

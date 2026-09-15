@@ -132,13 +132,13 @@ export default function AccountPricingContent({
 
         {isDefaultFallback ? (
           <div className="border border-dashed border-line-strong bg-canvas px-5 py-4 text-sm leading-6 text-ink-600">
-            未能从你名下的 API Key 计费策略中解析出唯一的计费组，以下展示的是目录的
+            未能从你名下的 API密钥 计费策略中解析出唯一的计费组，以下展示的是目录的
             <span className="mx-1 font-mono text-ink-800">default</span>
             计费组费率，仅供参考，不代表你的账户一定按此计费。
           </div>
         ) : (
           <div className="border border-dashed border-line-strong bg-canvas px-5 py-4 text-sm leading-6 text-ink-600">
-            以下费率基于你名下 API Key 的计费策略解析得出。
+            以下费率基于你名下 API密钥 的计费策略解析得出。
           </div>
         )}
 

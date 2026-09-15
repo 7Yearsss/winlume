@@ -20,13 +20,13 @@ async function loadManagedKey(
 ): Promise<ApiKeyRecord> {
   const key = await requestContext.repositories.apiKeys.findById(id);
   if (!key || key.isStudioHidden) {
-    throw new ConsoleRequestError("未找到该 API Key。", 404, "api_key_not_found");
+    throw new ConsoleRequestError("未找到该 API密钥。", 404, "api_key_not_found");
   }
   if (key.organizationId) {
     const selected = await requireConsoleOrganization(requestContext, key.organizationId);
     ensureOrganizationKeyManager(selected.membership.role);
   } else if (key.userId !== requestContext.userId) {
-    throw new ConsoleRequestError("未找到该 API Key。", 404, "api_key_not_found");
+    throw new ConsoleRequestError("未找到该 API密钥。", 404, "api_key_not_found");
   }
   return key;
 }
@@ -39,7 +39,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     const body = await request.json();
     if (body?.status === "active" || body?.status === "disabled") {
       const key = await requestContext.repositories.apiKeys.setEnabled(id, body.status === "active");
-      if (!key) throw new ConsoleRequestError("未找到该 API Key。", 404, "api_key_not_found");
+      if (!key) throw new ConsoleRequestError("未找到该 API密钥。", 404, "api_key_not_found");
       return consoleJson({ key: mapConsoleApiKey(key) });
     }
     const input = parseConsoleKeyPatchInput(body);
@@ -49,7 +49,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       allowedModels: input.allowedModels,
       ipAllowlist: input.ipAllowlist,
     });
-    if (!updated) throw new ConsoleRequestError("未找到该 API Key。", 404, "api_key_not_found");
+    if (!updated) throw new ConsoleRequestError("未找到该 API密钥。", 404, "api_key_not_found");
     return consoleJson({ key: mapConsoleApiKey(updated) });
   } catch (error) {
     return consoleError(error);
@@ -62,7 +62,7 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
     const requestContext = await requireConsoleContext();
     await loadManagedKey(requestContext, id);
     const revoked = await requestContext.repositories.apiKeys.revoke(id);
-    if (!revoked) throw new ConsoleRequestError("未找到该 API Key。", 404, "api_key_not_found");
+    if (!revoked) throw new ConsoleRequestError("未找到该 API密钥。", 404, "api_key_not_found");
     return consoleJson({ key: mapConsoleApiKey(revoked) });
   } catch (error) {
     return consoleError(error);

@@ -151,7 +151,7 @@ function KeyDialog({
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{editing ? "编辑 API Key" : "新建 API Key"}</DialogTitle>
+          <DialogTitle>{editing ? "编辑 API密钥" : "新建 API密钥"}</DialogTitle>
           <DialogDescription>
             {editing ? "修改限制后立即对后续请求生效。" : "完整密钥只会显示一次，请保存到受保护的环境变量中。"}
           </DialogDescription>
@@ -162,7 +162,7 @@ function KeyDialog({
               <FieldLabel htmlFor="key-name">名称</FieldLabel>
               <Input id="key-name" autoFocus value={name} onChange={(event) => setName(event.target.value)} maxLength={50} placeholder="例如：生产环境" />
             </Field>
-            <p className="text-sm text-muted-foreground">默认可调用账户内全部可用模型，系统自动选择路由，无需为不同模型分别创建 Key。</p>
+            <p className="text-sm text-muted-foreground">默认可调用账户内全部可用模型，系统自动选择路由，无需为不同模型分别创建密钥。</p>
             <details open={editing && Boolean(modelScopes || ipAllowList || expiresAt)} className="grid gap-4">
               <summary className="cursor-pointer text-sm font-medium">高级限制（可选）</summary>
               <div className="mt-4 grid gap-5">
@@ -251,7 +251,7 @@ function ConsoleKeysTable({
           </Button>
         ) : null}
       </DataTableToolbar>
-      <DataTable table={table} columnCount={columns.length} emptyDescription="没有匹配的 API Key。" />
+      <DataTable table={table} columnCount={columns.length} emptyDescription="没有匹配的 API密钥。" />
     </div>
   );
 }
@@ -302,7 +302,7 @@ export default function ConsoleKeysContent() {
       setOrganizationId(result.organizationId);
       setRowSelection({});
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "无法加载 API Keys。");
+      setError(reason instanceof Error ? reason.message : "无法加载 API密钥。");
     } finally {
       setLoading(false);
     }
@@ -353,7 +353,7 @@ export default function ConsoleKeysContent() {
 
   async function revokeSelected() {
     if (selectedActiveKeys.length === 0) return;
-    if (!window.confirm(`批量撤销 ${selectedActiveKeys.length} 个 Key 后，使用它们的应用会立即失去访问权限。是否继续？`)) return;
+    if (!window.confirm(`批量撤销 ${selectedActiveKeys.length} 个密钥 后，使用它们的应用会立即失去访问权限。是否继续？`)) return;
     setBatchRevoking(true);
     setError(null);
     try {
@@ -367,7 +367,7 @@ export default function ConsoleKeysContent() {
       if (revoked.size > 0) {
         applyKeys(current => current.map((item) => revoked.get(item.id) ?? item));
       }
-      if (failures > 0) setError(`${failures} 个 Key 撤销失败，请重试。`);
+      if (failures > 0) setError(`${failures} 个密钥 撤销失败，请重试。`);
       setRowSelection({});
     } finally {
       setBatchRevoking(false);
@@ -489,8 +489,8 @@ export default function ConsoleKeysContent() {
 
   return (
     <ConsolePage
-      title="API Keys"
-      description="外部程序使用 API Key；工作台登录即可使用，两者共享当前工作区资源。"
+      title="API密钥"
+      description="外部程序使用 API密钥；工作台登录即可使用，两者共享当前工作区资源。"
       actions={<div className="flex gap-2">
         <Button variant="outline" disabled={loading} onClick={() => void load(organizationId)}>
           <RefreshCw data-icon="inline-start" />刷新
@@ -498,13 +498,13 @@ export default function ConsoleKeysContent() {
         {canManage ? (
         <Button onClick={() => { setEditing(null); setShowDialog(true); }}>
           <Plus data-icon="inline-start" />
-          新建 Key
+          新建密钥
         </Button>
       ) : null}</div>}
     >
       {!loading && organizationId ? <section className="mb-4 rounded-xl border p-4">
         <div className="flex items-center justify-between gap-4">
-          <div><p className="font-medium">工作台调用</p><p className="mt-1 text-sm text-muted-foreground">系统维护专用凭证，无需手动创建 Key。</p></div>
+          <div><p className="font-medium">工作台调用</p><p className="mt-1 text-sm text-muted-foreground">系统维护专用凭证，无需手动创建密钥。</p></div>
           <Badge variant={studioStatus === "ready" ? "success" : "outline"}>{({ ready: "凭证可用", unavailable: "凭证需修复", missing: "尚未配置", unknown: "状态暂不可用" } as Record<string, string>)[studioStatus]}</Badge>
         </div>
       </section> : null}
@@ -545,7 +545,7 @@ export default function ConsoleKeysContent() {
       ) : null}
       {!canManage ? (
         <Alert className="mb-4">
-          <AlertDescription>你可以查看该工作区的 API Key，但没有创建或撤销权限（仅 owner / admin 可管理）。</AlertDescription>
+          <AlertDescription>你可以查看该工作区的 API密钥，但没有创建或撤销权限（仅 owner / admin 可管理）。</AlertDescription>
         </Alert>
       ) : null}
       {revealed ? (
@@ -556,7 +556,7 @@ export default function ConsoleKeysContent() {
               <p className="text-sm font-medium text-emerald-950">这是此密钥最后一次完整显示</p>
               <div className="mt-3 flex min-w-0 items-center gap-2 border border-emerald-200 bg-surface px-3 py-2">
                 <code className="min-w-0 flex-1 truncate text-sm text-ink-950">{revealed}</code>
-                <button type="button" onClick={() => void copySecret()} aria-label="复制 API Key" className="grid h-7 w-7 shrink-0 place-items-center text-ink-600 hover:bg-canvas">{copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}</button>
+                <button type="button" onClick={() => void copySecret()} aria-label="复制 API密钥" className="grid h-7 w-7 shrink-0 place-items-center text-ink-600 hover:bg-canvas">{copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}</button>
               </div>
             </div>
           </div>
@@ -570,12 +570,12 @@ export default function ConsoleKeysContent() {
       {loading ? (
         <div className="flex min-h-48 items-center justify-center gap-2 text-sm text-muted-foreground">
           <Spinner />
-          正在加载 API Keys…
+          正在加载 API密钥…
         </div>
       ) : !organizationId ? (
         <ConsoleEmptyState title="还没有工作区" description="密钥属于工作区。被邀请加入后，会在这里管理。" />
       ) : keys.length === 0 ? (
-        <ConsoleEmptyState title="还没有 API Key" description="为服务端应用创建第一个 API Key。密钥只会在创建后显示一次。" />
+        <ConsoleEmptyState title="还没有 API密钥" description="为服务端应用创建第一个 API密钥。密钥只会在创建后显示一次。" />
       ) : (
         <ConsoleKeysTable
           keys={keys}

@@ -221,7 +221,7 @@ const productPaths = [
   {
     id: "api",
     index: "01",
-    title: "一个 API Key，连接全部模型",
+    title: "一个 API密钥，连接全部模型",
     outcome: "多模态统一接入，OpenAI 兼容，换模型不用改代码。",
     meta: "模型 API",
     href: "/products?cate=api",
@@ -356,7 +356,7 @@ const startSteps = [
   {
     n: "03",
     title: "沉淀成可复用流程",
-    copy: "保存 Skill、工作流或 API Key，让下一次从这里开始。",
+    copy: "保存 Skill、工作流或 API密钥，让下一次从这里开始。",
     href: "/studio/skills",
   },
 ] as const;
@@ -399,7 +399,7 @@ const faqs = [
     a: "对话与生成按实际用量扣减余额。可在账户用量查看明细，在计费页充值或开通会员额度。",
   },
   {
-    q: "如何获取 API Key 并管理权限？",
+    q: "如何获取 API密钥 并管理权限？",
     a: "在账户中创建专用 Key，写入环境变量后通过 /v1/models 验证。团队场景建议按项目拆 Key，并及时轮换与撤销。",
   },
   {
@@ -1402,7 +1402,7 @@ export default function ModelMarket({ initialContent }: { initialContent?: Porta
               <div className="portal-ed-support-intro">
                 <p className="portal-ed-kicker">Support</p>
                 <h2 id="portal-support-title">问题先查这里，卡住再找人</h2>
-                <p>从创建 Key 到企业部署，把常见决策写清楚。</p>
+                <p>从创建密钥 到企业部署，把常见决策写清楚。</p>
                 <button type="button" className="portal-ed-support-cta" onClick={openSupportChat}>
                   联系技术支持
                   <ChevronRight aria-hidden />

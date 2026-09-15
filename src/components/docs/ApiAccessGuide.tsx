@@ -31,7 +31,7 @@ export default function ApiAccessGuide() {
       <section className="api-guide-section">
         <h2>快速开始</h2>
         <div className="api-guide-steps">
-          {["选择入口", "获取 API Key", "按需扩展"].map((title, index) => (
+          {["选择入口", "获取 API密钥", "按需扩展"].map((title, index) => (
             <div key={title}><em>0{index + 1}</em><strong>{title}</strong><span>{index === 0 ? "按任务选择模型、工具或 Agent。" : index === 1 ? "在控制台创建密钥并妥善保存。" : "根据业务需要增加模型与工作流。"}</span></div>
           ))}
         </div>
@@ -42,7 +42,7 @@ export default function ApiAccessGuide() {
         <div className="api-guide-config">
           <dl>
             <div><dt>Base URL</dt><dd>https://api.reizo.ai/v1</dd></div>
-            <div><dt>API Key</dt><dd>在个人中心生成</dd></div>
+            <div><dt>API密钥</dt><dd>在个人中心生成</dd></div>
             <div><dt>协议</dt><dd>OpenAI Compatible</dd></div>
           </dl>
           <pre><code>{`curl https://api.reizo.ai/v1/chat/completions \\

@@ -744,7 +744,7 @@ export const apiCategories: ApiDocCategory[] = [
         ],
         notes: [
           `连接示例：wss://api.winlume.ai/v1/realtime?model=gpt-4o-realtime-preview`,
-          "鉴权可通过 Authorization 头或子协议传递 API Key（视客户端实现而定）。",
+          "鉴权可通过 Authorization 头或子协议传递 API密钥（视客户端实现而定）。",
         ],
         requestExample: `wss://api.winlume.ai/v1/realtime?model=gpt-4o-realtime-preview`,
         responseExample: JSON.stringify(

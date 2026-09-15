@@ -22,7 +22,7 @@ export default function AccountOverview() {
     return () => window.clearTimeout(timer);
   }, [account, load]);
 
-  if (!account) return <section className="account-personal-empty"><UserRound aria-hidden /><h1>登录后查看个人中心</h1><p>账户信息、额度、API Keys 与任务看板会汇总在这里。</p><button type="button" onClick={() => openLogin("login")}>登录 / 注册</button></section>;
+  if (!account) return <section className="account-personal-empty"><UserRound aria-hidden /><h1>登录后查看个人中心</h1><p>账户信息、额度、API密钥 与任务看板会汇总在这里。</p><button type="button" onClick={() => openLogin("login")}>登录 / 注册</button></section>;
 
   const available = overview?.wallet.availableCredits ?? 0;
   const used = overview?.wallet.usedCredits ?? 0;
@@ -47,7 +47,7 @@ export default function AccountOverview() {
         <h2>安全与接入</h2>
         <div><ShieldCheck aria-hidden /><strong>账户安全</strong><em>定期更新登录凭据并保护账号。</em><Link href="/account/security">修改密码</Link></div>
         <div><UserPlus aria-hidden /><strong>邀请好友</strong><em>生成专属邀请链接，邀请朋友或团队成员。</em><Link href="/account/invite">去邀请</Link></div>
-        <div><KeyRound aria-hidden /><strong>API Keys</strong><em>{overview ? `${overview.keys.active} 个可用密钥` : "正在读取"}</em><Link href="/account/keys">管理密钥</Link></div>
+        <div><KeyRound aria-hidden /><strong>API密钥</strong><em>{overview ? `${overview.keys.active} 个可用密钥` : "正在读取"}</em><Link href="/account/keys">管理密钥</Link></div>
       </section>
     </div>
   );

@@ -44,7 +44,7 @@ export function ApiHub() {
           OpenAI 兼容的 HTTP 接口。鉴权使用 Bearer Token，经 Reizo 网关做校验、路由与计费。
         </p>
         <div className="docs-home-actions">
-          <Link href="/account/keys" className="docs-btn primary"><KeyRound aria-hidden />创建 API Key</Link>
+          <Link href="/account/keys" className="docs-btn primary"><KeyRound aria-hidden />创建 API密钥</Link>
           <Link href="/products?cate=api" className="docs-btn">查看模型目录<ArrowRight aria-hidden /></Link>
         </div>
         </div>
@@ -68,7 +68,7 @@ export function ApiHub() {
         <h2>接入步骤</h2>
         <ol className="docs-steps">
           <li>
-            在 <Link href="/account/keys">API Keys</Link> 创建密钥
+            在 <Link href="/account/keys">API密钥</Link> 创建密钥
           </li>
           <li>
             设置环境变量 <code>{DOCS_API_KEY_ENV}</code>
