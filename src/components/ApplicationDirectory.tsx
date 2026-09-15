@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { applicationTools, defaultToolPresentation, resolveApplicationTools, representativeTools, applicationToolHref, toolCategoryDescriptions, type ApplicationTool, type ToolPresentation } from "@/lib/portal/application-tools";
 import styles from "./application-directory.module.css";
+import { toolCategorySummaries } from "@/lib/portal/application-category-copy";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft, ArrowRight, BarChart3, BriefcaseBusiness, ChevronRight, Code2, FileText, ImageIcon,
@@ -16,7 +17,6 @@ import type { SkillMeta } from "@/lib/agent/types";
 import {
   applicationCatalogSkillHref,
   portalCategoryFromSkill,
-  portalSkillCountsFromCatalogs,
   portalSkillsHref,
   skillsForPortalCategory,
   type PortalToolCategory,
@@ -48,7 +48,6 @@ export default function ApplicationDirectory({ initialQuery = "", initialCategor
   const [recommendationOpen, setRecommendationOpen] = useState(false);
   const [recommendationCategory, setRecommendationCategory] = useState<ToolCategory | null>(null);
   const [catalogSkills, setCatalogSkills] = useState<SkillMeta[]>([]);
-  const [catalogCounts, setCatalogCounts] = useState<Record<ToolCategory, number> | null>(null);
   const [skillsLoading, setSkillsLoading] = useState(true);
   const [presentation, setPresentation] = useState<ToolPresentation[]>(defaultToolPresentation);
   const [moreCategory, setMoreCategory] = useState<ToolCategory | null>(null);
@@ -72,12 +71,10 @@ export default function ApplicationDirectory({ initialQuery = "", initialCategor
       .then((payload: { skills?: SkillMeta[]; catalogs?: Array<{ id: string; count: number }> } | null) => {
         if (cancelled) return;
         setCatalogSkills(payload?.skills ?? []);
-        setCatalogCounts(portalSkillCountsFromCatalogs(payload?.catalogs ?? []));
       })
       .catch(() => {
         if (!cancelled) {
           setCatalogSkills([]);
-          setCatalogCounts(null);
         }
       })
       .finally(() => {
@@ -141,7 +138,7 @@ export default function ApplicationDirectory({ initialQuery = "", initialCategor
               <Icon aria-hidden />
               <span>
                 <strong>{category.name}</strong>
-                <small>应用 {enabledTools.filter((tool) => tool.category === category.name).length} · Skills {catalogCounts?.[category.name] ?? (skillsLoading ? "…" : 0)}</small>
+                <small>{toolCategorySummaries[category.name]}</small>
               </span>
               <ChevronRight aria-hidden />
             </button>
@@ -280,7 +277,7 @@ export default function ApplicationDirectory({ initialQuery = "", initialCategor
                       <span className="app-recommendation-category-icon"><Icon aria-hidden /></span>
                       <span className="app-recommendation-category-copy">
                         <strong>{category.name}</strong>
-                        <small>{enabledTools.filter((tool) => tool.category === category.name).length} 个应用 · {catalogCounts?.[category.name] ?? (skillsLoading ? "…" : 0)} 项技能</small>
+                        <small>{toolCategorySummaries[category.name]}</small>
                       </span>
                       <ChevronRight aria-hidden />
                     </button>

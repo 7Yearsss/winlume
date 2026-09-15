@@ -8,6 +8,7 @@ import { BarChart3, ChevronLeft, ChevronRight, CircleHelp, Code2, Crown, FileIma
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { useModals } from "@/components/providers";
 import PortalHeader from "@/components/PortalHeader";
+import { toolCategorySummaries } from "@/lib/portal/application-category-copy";
 import { formatBalance } from "@/lib/account";
 import { getConsoleOverview } from "@/lib/console/client";
 import type { ConsoleOverview } from "@/lib/console/types";
@@ -155,14 +156,14 @@ const workScenes = WORK_SCENES.map((scene) => ({
 }));
 
 const toolApplications = [
-  { label: "内容与营销", detail: "文案创作、SEO、社媒运营", icon: "/figma-home/tool-content.svg", href: "/products?cate=app&category=%E5%86%85%E5%AE%B9%E4%B8%8E%E8%90%A5%E9%94%80" },
-  { label: "视觉与媒体", detail: "图像处理、视频创作、素材生成", icon: "/figma-home/icon-image.svg", href: "/products?cate=app&category=%E8%A7%86%E8%A7%89%E4%B8%8E%E5%AA%92%E4%BD%93" },
-  { label: "电商与销售", detail: "商品分析、运营增长、CRM", icon: "/figma-home/tool-commerce.svg", href: "/products?cate=app&category=%E7%94%B5%E5%95%86%E4%B8%8E%E9%94%80%E5%94%AE" },
-  { label: "财务与法务", detail: "合同审查、报表分析、合规助手", icon: "/figma-home/icon-db.svg", href: "/products?cate=app&category=%E8%B4%A2%E5%8A%A1%E4%B8%8E%E6%B3%95%E5%8A%A1" },
-  { label: "产品与研发", detail: "需求分析、原型设计、PRD", icon: "/figma-home/tool-agent.svg", href: "/products?cate=app&category=%E4%BA%A7%E5%93%81%E4%B8%8E%E7%A0%94%E5%8F%91" },
-  { label: "办公与管理", detail: "PPT、文档处理、会议纪要", icon: "/figma-home/icon-video.svg", href: "/products?cate=app&category=%E5%8A%9E%E5%85%AC%E4%B8%8E%E7%AE%A1%E7%90%86" },
-  { label: "数据与科研", detail: "数据分析、可视化、研究报告", icon: "/figma-home/icon-search.svg", href: "/products?cate=app&category=%E6%95%B0%E6%8D%AE%E4%B8%8E%E7%A7%91%E7%A0%94" },
-  { label: "开发与代码", detail: "代码生成、调试、API 开发", icon: "/figma-home/tool-api.svg", href: "/products?cate=app&category=%E5%BC%80%E5%8F%91%E4%B8%8E%E4%BB%A3%E7%A0%81" },
+  { label: "内容与营销", detail: toolCategorySummaries["内容与营销"], icon: "/figma-home/tool-content.svg", href: "/products?cate=app&category=%E5%86%85%E5%AE%B9%E4%B8%8E%E8%90%A5%E9%94%80" },
+  { label: "视觉与媒体", detail: toolCategorySummaries["视觉与媒体"], icon: "/figma-home/icon-image.svg", href: "/products?cate=app&category=%E8%A7%86%E8%A7%89%E4%B8%8E%E5%AA%92%E4%BD%93" },
+  { label: "电商与销售", detail: toolCategorySummaries["电商与销售"], icon: "/figma-home/tool-commerce.svg", href: "/products?cate=app&category=%E7%94%B5%E5%95%86%E4%B8%8E%E9%94%80%E5%94%AE" },
+  { label: "财务与法务", detail: toolCategorySummaries["财务与法务"], icon: "/figma-home/icon-db.svg", href: "/products?cate=app&category=%E8%B4%A2%E5%8A%A1%E4%B8%8E%E6%B3%95%E5%8A%A1" },
+  { label: "产品与研发", detail: toolCategorySummaries["产品与研发"], icon: "/figma-home/tool-agent.svg", href: "/products?cate=app&category=%E4%BA%A7%E5%93%81%E4%B8%8E%E7%A0%94%E5%8F%91" },
+  { label: "办公与管理", detail: toolCategorySummaries["办公与管理"], icon: "/figma-home/icon-video.svg", href: "/products?cate=app&category=%E5%8A%9E%E5%85%AC%E4%B8%8E%E7%AE%A1%E7%90%86" },
+  { label: "数据与科研", detail: toolCategorySummaries["数据与科研"], icon: "/figma-home/icon-search.svg", href: "/products?cate=app&category=%E6%95%B0%E6%8D%AE%E4%B8%8E%E7%A7%91%E7%A0%94" },
+  { label: "开发与代码", detail: toolCategorySummaries["开发与代码"], icon: "/figma-home/tool-api.svg", href: "/products?cate=app&category=%E5%BC%80%E5%8F%91%E4%B8%8E%E4%BB%A3%E7%A0%81" },
 ] as const;
 
 type PortalApplicationPreview = "storyboard" | "poster" | "subtitles" | "avatar" | "extract" | "product" | "finance" | "slides" | "code" | "contract";

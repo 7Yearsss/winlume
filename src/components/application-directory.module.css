@@ -6,6 +6,7 @@
   --tool-surface: #f4f9ff;
 }
 .toolsPanel { margin-top: 14px; padding: 20px; border: 1px solid var(--tool-line); border-radius: 18px; background: linear-gradient(120deg, #fff, var(--tool-surface)); }
+.directory :global(.portal-directory-side) :global(.portal-directory-model-row) small { display: block; margin-top: 4px; color: #7890b0; font-size: 12px; line-height: 18px; white-space: normal; }
 .sectionHead { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 .sectionTitle { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; min-width: 0; }
 .sectionTitle h2 { margin: 0; color: var(--tool-ink, #15243d); font-size: 22px; font-weight: 700; white-space: nowrap; }
