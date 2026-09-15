@@ -1,0 +1,62 @@
+.directory {
+  --tool-ink: #15243d;
+  --tool-muted: #657b9b;
+  --tool-blue: #246bff;
+  --tool-line: #d7e6fa;
+  --tool-surface: #f4f9ff;
+}
+.toolsPanel { margin-top: 14px; padding: 20px; border: 1px solid var(--tool-line); border-radius: 18px; background: linear-gradient(120deg, #fff, var(--tool-surface)); }
+.sectionHead { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.sectionTitle { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; min-width: 0; }
+.sectionTitle h2 { margin: 0; color: var(--tool-ink, #15243d); font-size: 22px; font-weight: 700; white-space: nowrap; }
+.sectionTitle p { margin: 0; padding: 5px 12px; border: 1px solid #dceaff; border-radius: 20px; color: #7690b4; background: #edf5ff; font-size: 12px; line-height: 1.5; }
+.sectionIcon { display: grid; place-items: center; flex-shrink: 0; width: 42px; height: 42px; color: #246bff; border-radius: 50%; background: #e7f0ff; }
+.sectionIcon svg { width: 23px; height: 23px; }
+.moreLink { display: inline-flex; flex-shrink: 0; align-items: center; gap: 5px; color: #246bff; font-size: 13px; font-weight: 600; cursor: pointer; }
+.moreLink svg { width: 15px; height: 15px; }
+.toolGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.toolCard { isolation: isolate; position: relative; display: flex; min-height: 254px; overflow: hidden; border: 1px solid #e5edf7; border-radius: 13px; background: #f1f5f9; text-decoration: none; transition: border-color .2s, box-shadow .2s; }
+.toolCard:hover { border-color: #9cc1ff; box-shadow: 0 10px 28px -18px #3168b5; }
+.toolCard:focus-visible, .moreLink:focus-visible { outline: 3px solid #246bff; outline-offset: 4px; }
+.cover { z-index: -2; object-fit: cover; object-position: center; }
+.imageVeil { position: absolute; z-index: -1; inset: 0; background: linear-gradient(90deg, rgba(255,255,255,.95), rgba(255,255,255,.84) 42%, rgba(255,255,255,.08) 82%); }
+.toolCopy { display: flex; align-items: flex-start; flex-direction: column; width: 75%; padding: 18px; }
+.toolBadge { padding: 3px 14px; border: 1px solid #d5e6ff; border-radius: 16px; color: #246bff; background: #edf5ff; font-size: 12px; line-height: 18px; }
+.toolIcon { display: grid; place-items: center; width: 40px; height: 40px; margin-top: 9px; border-radius: 12px; background: #edf4ff; color: #246bff; }
+.toolIcon svg { width: 25px; height: 25px; }
+.toolCopy h3 { margin: 8px 0 0; color: #15243d; font-size: 19px; line-height: 1.4; font-weight: 650; }
+.toolCopy p { margin: 5px 0 14px; color: #5e7597; font-size: 13px; line-height: 1.6; }
+.toolAction { display: inline-flex; align-items: center; gap: 9px; margin-top: auto; padding: 6px 16px; border: 1px solid #a9c9ff; border-radius: 22px; color: #246bff; background: rgba(255,255,255,.94); font-size: 13px; line-height: 20px; font-weight: 600; white-space: nowrap; }
+.toolAction svg { width: 16px; height: 16px; }
+.directory .skillsPanel { margin-top: 16px; padding: 20px; border: 1px solid #cddff6; border-radius: 18px; background: linear-gradient(120deg, #fff, #f2f7ff); }
+.directory .skillsPanel :global(.app-skill-strip-head) { padding-top: 0; margin-bottom: 18px; align-items: center; }
+.directory .skillsPanel :global(.studio-catalog-card) { min-width: 0; min-height: 174px; padding: 18px; border: 1px solid #dce7f5; border-radius: 12px; background: #fff; }
+.directory .skillsPanel :global(.app-directory-skill-grid) { gap: 14px; }
+.moreDialog { padding: 24px; max-height: 80vh; overflow: auto; border-radius: 18px; background: #fff; box-shadow: 0 24px 80px #10233d33; }
+.moreDialog h2 { color: #15243d; font-size: 23px; font-weight: 700; }
+.moreDialog header p { margin-top: 6px; color: #657b9b; font-size: 13px; }
+.moreSearch { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding: 12px 15px; border: 1px solid #d7e6fa; border-radius: 10px; }
+.moreSearch svg { width: 18px; height: 18px; color: #657b9b; }
+.moreSearch input { width: 100%; outline: none; }
+@media (max-width: 1100px) { .sectionTitle p { display: none; } .toolCopy { width: 87%; padding: 15px; } .toolCopy h3 { font-size: 17px; } }
+@media (max-width: 760px) {
+  .directory:global(.portal-directory-layout) { grid-template-columns: 1fr !important; }
+  .directory > :global(.portal-directory-side) { display: flex !important; position: static !important; width: auto !important; min-width: 0; overflow-x: auto !important; gap: 8px; padding: 10px; }
+  .directory > :global(.portal-directory-side) > button { display: flex !important; flex: 0 0 auto; width: auto !important; min-height: 42px; margin: 0; padding: 0 12px; white-space: nowrap; }
+  .directory > :global(.portal-directory-side) > button strong { white-space: nowrap; }
+  .directory > :global(.portal-directory-side) h2,
+  .directory > :global(.portal-directory-side) small,
+  .directory > :global(.portal-directory-side) svg,
+  .directory > :global(.portal-directory-side) :global(.app-directory-help) { display: none !important; }
+  .directory :global(.portal-directory-main) { min-width: 0; }
+  .toolsPanel, .directory .skillsPanel { padding: 14px; }
+  .toolGrid, .directory .skillsPanel :global(.app-directory-skill-grid) { grid-template-columns: 1fr !important; }
+  .toolCard { min-height: 244px; }
+  .toolCopy { width: 70%; padding: 18px; }
+  .sectionTitle { gap: 8px; }
+  .sectionTitle h2 { font-size: 19px; }
+  .sectionHead { gap: 10px; }
+  .sectionIcon { width: 34px; height: 34px; }
+  .moreDialog { padding: 18px; }
+}
+@media (prefers-reduced-motion: reduce) { .toolCard { transition: none; } }

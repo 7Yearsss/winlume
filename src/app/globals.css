@@ -11515,6 +11515,28 @@ body {
 }
 
 /* Images use contain above, preserving the complete banner at either density. */
+.portal-home .portal-five-column-footer {
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  align-items: start;
+}
+
+.portal-home .portal-five-column-footer > div {
+  grid-column: auto;
+  min-height: 0;
+  justify-content: flex-start;
+}
+
+.portal-home .portal-five-column-footer > .portal-bottom-brand,
+.portal-home .portal-five-column-footer > .portal-ed-footer-brand {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 760px) {
+  .portal-home .portal-five-column-footer {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
 .portal-api-empty { color: #7890a7; font-size: 12px; }
 @media (min-width: 761px) and (max-width: 1600px) {
   .portal-home-dashboard {

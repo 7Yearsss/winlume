@@ -1,3 +1,4 @@
+import { defaultToolPresentation, normalizeToolPresentation, type ToolPresentation } from "./application-tools";
 import { getPlatformRepositories } from "@/lib/platform/repositories";
 import { PORTAL_IMAGE_MAX_DATA_URL_LENGTH } from "@/lib/portal/content-limits";
 import { createHash } from "node:crypto";
@@ -15,9 +16,10 @@ export type PortalVendorModel = { name: string; endpointTypes: string[]; descrip
 export type PortalModelVendor = { id: string; name: string; key: string; logoUrl: string; category: PortalModelCategory; enabled: boolean; models: PortalVendorModel[] };
 export type PortalApplicationShowcaseItem = { id: string; title: string; href: string; imageUrl: string; group: "popular" | "latest"; enabled: boolean };
 export type PortalCapabilityShowcaseItem = { id: string; title: string; eyebrow: string; href: string; imageUrl: string; tone: "models" | "agent" | "usage"; enabled: boolean };
-export type PortalContentConfig = { carousel: PortalCarouselSlide[]; notifications: PortalNotification[]; modelVendors: PortalModelVendor[]; applicationShowcase: PortalApplicationShowcaseItem[]; capabilityShowcase: PortalCapabilityShowcaseItem[] };
+export type PortalContentConfig = { toolDirectory: ToolPresentation[]; carousel: PortalCarouselSlide[]; notifications: PortalNotification[]; modelVendors: PortalModelVendor[]; applicationShowcase: PortalApplicationShowcaseItem[]; capabilityShowcase: PortalCapabilityShowcaseItem[] };
 
 export const defaultPortalContent: PortalContentConfig = {
+  toolDirectory: defaultToolPresentation,
   carousel: [
     { id: "claude-fable-5", imageUrl: "/figma-home/featured/slide-claude-fable-5.png", alt: "Model Review · Claude Fable 5", href: "/products?cate=api", enabled: true },
     { id: "gpt-5-6-sol", imageUrl: "/figma-home/featured/slide-gpt-5-6-sol.png", alt: "Model Review · GPT-5.6 Sol", href: "/products?cate=api", enabled: true },
@@ -84,6 +86,7 @@ export function normalizePortalContent(input: unknown): PortalContentConfig {
   return {
     carousel: carousel.length ? carousel : defaultPortalContent.carousel,
     notifications,
+    toolDirectory: normalizeToolPresentation(raw.toolDirectory),
     modelVendors,
     applicationShowcase: applicationShowcase.length ? applicationShowcase : defaultPortalContent.applicationShowcase,
     capabilityShowcase: capabilityShowcase.length ? capabilityShowcase : defaultPortalContent.capabilityShowcase,
@@ -109,7 +112,7 @@ export function invalidatePortalContentCache() {
 }
 
 const DATA_IMAGE_PATTERN = /^data:(image\/(?:png|jpe?g|webp|gif|svg\+xml));base64,([a-z0-9+/=\s]+)$/i;
-type PortalImageSection = "carousel" | "applicationShowcase" | "capabilityShowcase" | "modelVendors";
+type PortalImageSection = "toolDirectory" | "carousel" | "applicationShowcase" | "capabilityShowcase" | "modelVendors";
 
 function publicImageUrl(section: PortalImageSection, id: string, imageUrl: string): string {
   if (!DATA_IMAGE_PATTERN.test(imageUrl)) return imageUrl;
@@ -124,6 +127,7 @@ function publicImageUrl(section: PortalImageSection, id: string, imageUrl: strin
 export function toPublicPortalContent(content: PortalContentConfig): PortalContentConfig {
   return {
     ...content,
+    toolDirectory: content.toolDirectory.map((item) => ({ ...item, imageUrl: publicImageUrl("toolDirectory", item.id, item.imageUrl) })),
     carousel: content.carousel.map((item) => ({ ...item, imageUrl: publicImageUrl("carousel", item.id, item.imageUrl) })),
     modelVendors: content.modelVendors.map((vendor) => ({ ...vendor, logoUrl: publicImageUrl("modelVendors", vendor.id, vendor.logoUrl) })),
     applicationShowcase: content.applicationShowcase.map((item) => ({ ...item, imageUrl: publicImageUrl("applicationShowcase", item.id, item.imageUrl) })),
@@ -137,7 +141,7 @@ export async function getPublicPortalContent(): Promise<PortalContentConfig> {
 
 /** Resolve one managed image without exposing the stored data URL in JSON. */
 export async function getPortalImage(section: string, requestedId: string): Promise<{ mimeType: string; data: Buffer } | null> {
-  const allowedSections: PortalImageSection[] = ["carousel", "applicationShowcase", "capabilityShowcase", "modelVendors"];
+  const allowedSections: PortalImageSection[] = ["toolDirectory", "carousel", "applicationShowcase", "capabilityShowcase", "modelVendors"];
   if (!allowedSections.includes(section as PortalImageSection) || !requestedId) return null;
   const content = await getPortalContent();
   const rows = content[section as PortalImageSection];

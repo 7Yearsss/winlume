@@ -22,10 +22,10 @@ const cycleOptions: Array<{ id: Cycle; label: string; discount: number; hint?: s
 ];
 
 const plans: Array<{ id: string; name: string; price: number; credits: string; topup: string; fit: string; featured?: boolean }> = [
-  { id: "core", name: "Core 基础", price: 29, credits: "10,000", topup: "95 折", fit: "适合轻度体验用户" },
-  { id: "plus", name: "Plus 进阶", price: 69, credits: "30,000", topup: "90 折", fit: "适合日常高频使用" },
-  { id: "pro", name: "Pro 专业", price: 129, credits: "80,000", topup: "85 折", fit: "适合创作、办公与 Agent 工作流", featured: true },
-  { id: "max", name: "Max 旗舰", price: 229, credits: "180,000", topup: "80 折", fit: "适合专业用户与小型团队" },
+  { id: "core", name: "Core 基础", price: 29, credits: "10,000", topup: "97.5 折", fit: "适合轻度体验用户" },
+  { id: "plus", name: "Plus 进阶", price: 69, credits: "30,000", topup: "95 折", fit: "适合日常高频使用" },
+  { id: "pro", name: "Pro 专业", price: 129, credits: "80,000", topup: "92.5 折", fit: "适合创作、办公与 Agent 工作流", featured: true },
+  { id: "max", name: "Max 旗舰", price: 229, credits: "180,000", topup: "9 折", fit: "适合专业用户与小型团队" },
 ];
 
 const benefitItems = [

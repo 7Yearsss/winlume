@@ -31,7 +31,7 @@ describe("portal top navigation", () => {
     expect(navSource).toContain("portal-membership-entry");
     expect(navSource).toContain("portal-user-links");
     expect(navSource).toContain("portal-account-submenu");
-    expect(navSource).toContain("API Key");
+    expect(navSource).toContain("API密钥");
     expect(navSource).toContain("钱包");
   });
 

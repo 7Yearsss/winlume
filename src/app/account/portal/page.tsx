@@ -2,6 +2,6 @@ import PortalContentAdminContent from "@/components/account/PortalContentAdminCo
 
 export default async function PortalContentAdminPage({ searchParams }: { searchParams: Promise<{ section?: string }> }) {
   const { section } = await searchParams;
-  const initialSection = section === "models" || section === "applications" || section === "capabilities" || section === "notifications" ? section : "carousel";
+  const initialSection = section === "models" || section === "applications" || section === "tools" || section === "capabilities" || section === "notifications" ? section : "carousel";
   return <PortalContentAdminContent initialSection={initialSection} />;
 }

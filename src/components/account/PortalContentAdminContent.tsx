@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { PORTAL_IMAGE_MAX_FILE_BYTES } from "@/lib/portal/content-limits";
 import ModelPricingDialog from "./ModelPricingDialog";
+import { applicationTools, defaultToolPresentation, normalizeToolPresentation, resolveApplicationTools, representativeTools, toolCategoryDescriptions, type ToolPresentation } from "@/lib/portal/application-tools";
 
 type Category = "llm" | "image" | "audio" | "video" | "embed" | "other";
 type Slide = {
@@ -77,13 +78,14 @@ type CapabilityShowcase = {
   enabled: boolean;
 };
 type PortalContent = {
+  toolDirectory: ToolPresentation[];
   carousel: Slide[];
   notifications: Notice[];
   modelVendors: Vendor[];
   applicationShowcase: ApplicationShowcase[];
   capabilityShowcase: CapabilityShowcase[];
 };
-type PortalAdminSection = "carousel" | "applications" | "capabilities" | "notifications" | "models";
+type PortalAdminSection = "carousel" | "applications" | "tools" | "capabilities" | "notifications" | "models";
 
 async function readPortalResponse<T>(response: Response): Promise<T> {
   const text = await response.text();
@@ -105,6 +107,7 @@ const portalAdminSections: Array<{
 }> = [
   { id: "carousel", label: "首页轮播", description: "主视觉与焦点内容", icon: ImagePlus },
   { id: "applications", label: "应用展示", description: "热门与最新工具", icon: WandSparkles },
+  { id: "tools", label: "工具目录", description: "分类封面与代表工具", icon: ImagePlus },
   { id: "capabilities", label: "能力模块", description: "模型、Agent 与治理", icon: Sparkles },
   { id: "notifications", label: "通知公告", description: "门户消息与跳转", icon: Megaphone },
   { id: "models", label: "模型提供商", description: "首页 API 展示管理", icon: Upload },
@@ -128,6 +131,7 @@ const categories: Array<{ value: Category; label: string }> = [
   { value: "other", label: "信息检索" },
 ];
 const emptyContent: PortalContent = {
+  toolDirectory: defaultToolPresentation,
   carousel: [],
   notifications: [],
   modelVendors: [],
@@ -512,6 +516,39 @@ function ShowcaseImage({
       />
     </div>
   );
+}
+
+function ToolDirectoryManager({ items, onChange, onSave, saving, onError }: {
+  items: ToolPresentation[]; onChange: (items: ToolPresentation[]) => void;
+  onSave: () => void; saving: boolean; onError: (message: string) => void;
+}) {
+  const [category, setCategory] = useState(applicationTools[0].category);
+  const [query, setQuery] = useState("");
+  const categoryTools = items.filter((item) => applicationTools.find((tool) => tool.id === item.id)?.category === category);
+  const featured = new Set(representativeTools(resolveApplicationTools(items).filter((tool) => tool.category === category)).map((tool) => tool.id));
+  const update = (id: string, patch: Partial<ToolPresentation>) => onChange(items.map((item) => item.id === id ? { ...item, ...patch } : item));
+  const move = (id: string, direction: -1 | 1) => {
+    const index = categoryTools.findIndex((item) => item.id === id);
+    const other = categoryTools[index + direction];
+    if (!other) return;
+    const next = [...items];
+    const a = next.findIndex((item) => item.id === id), b = next.findIndex((item) => item.id === other.id);
+    [next[a], next[b]] = [next[b], next[a]];
+    onChange(next);
+  };
+  return <section className="grid gap-4">
+    <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="font-semibold">应用工具图片与推荐</h2><p className="text-sm text-muted-foreground">每类优先展示 3 个代表工具，其余收入更多工具。代表不足时按排序补齐。</p></div><Button type="button" disabled={saving} onClick={onSave}><Save className="h-4 w-4" />保存工具目录</Button></div>
+    <div className="flex flex-wrap gap-3"><select aria-label="工具分类" className="rounded-md border p-2" value={category} onChange={(event) => { setCategory(event.target.value as typeof category); setQuery(""); }}>{Object.keys(toolCategoryDescriptions).map((name) => <option key={name}>{name}</option>)}</select><input aria-label="搜索管理工具" className="rounded-md border p-2" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索工具名称" /></div>
+    {categoryTools.filter((item) => applicationTools.find((tool) => tool.id === item.id)!.name.includes(query.trim())).map((item) => {
+      const tool = applicationTools.find((tool) => tool.id === item.id)!;
+      const index = categoryTools.findIndex((row) => row.id === item.id);
+      return <article key={item.id} className="grid gap-4 rounded-xl border bg-background p-4 lg:grid-cols-[220px_1fr_auto]">
+        <div><ShowcaseImage value={item.imageUrl} onChange={(imageUrl) => update(item.id, { imageUrl })} onError={onError} /><button type="button" className="mt-2 text-xs text-blue-600" onClick={() => update(item.id, { imageUrl: tool.imageUrl })}>恢复默认封面</button></div>
+        <div className="grid content-start gap-3"><h3 className="font-semibold">{tool.name}</h3><p className="text-sm text-muted-foreground">{tool.description}</p><p className="text-xs text-blue-600">{item.enabled ? featured.has(item.id) ? "当前展示：代表工具" : "当前展示：更多工具" : "已隐藏"}</p><p className="text-xs text-muted-foreground">建议 3:2 横图，主体靠右，左侧留白。支持上传图片或填写图片地址。</p><div className="flex gap-5"><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={item.featured} onChange={(event) => update(item.id, { featured: event.target.checked })} />优先作为代表工具</label><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={item.enabled} onChange={(event) => update(item.id, { enabled: event.target.checked })} />在目录展示</label></div></div>
+        <div className="flex gap-2"><Button type="button" variant="outline" size="icon" aria-label={`上移${tool.name}`} disabled={index === 0 || Boolean(query)} onClick={() => move(item.id, -1)}><ArrowUp className="h-4 w-4" /></Button><Button type="button" variant="outline" size="icon" aria-label={`下移${tool.name}`} disabled={index === categoryTools.length - 1 || Boolean(query)} onClick={() => move(item.id, 1)}><ArrowDown className="h-4 w-4" /></Button></div>
+      </article>;
+    })}
+  </section>;
 }
 
 function ApplicationShowcaseManager({
@@ -1034,6 +1071,7 @@ export default function PortalContentAdminContent({ initialSection = "carousel" 
       }>(settings);
       if (!settings.ok) throw new Error(body.error || "加载失败");
       setContent({
+        toolDirectory: normalizeToolPresentation(body.toolDirectory),
         carousel: body.carousel ?? [],
         notifications: body.notifications ?? [],
         modelVendors: body.modelVendors ?? [],
@@ -1095,11 +1133,11 @@ export default function PortalContentAdminContent({ initialSection = "carousel" 
         headers: { "content-type": "application/json" },
         credentials: "same-origin",
         body: JSON.stringify({
-          section: section === "carousel" ? "carousel"
+          section: section === "tools" ? "toolDirectory" : section === "carousel" ? "carousel"
             : section === "applications" ? "applicationShowcase"
               : section === "capabilities" ? "capabilityShowcase"
                 : section === "notifications" ? "notifications" : "modelVendors",
-          value: section === "carousel" ? content.carousel
+          value: section === "tools" ? content.toolDirectory : section === "carousel" ? content.carousel
             : section === "applications" ? content.applicationShowcase
               : section === "capabilities" ? content.capabilityShowcase
                 : section === "notifications" ? content.notifications : content.modelVendors,
@@ -1110,6 +1148,7 @@ export default function PortalContentAdminContent({ initialSection = "carousel" 
       }>(response);
       if (!response.ok) throw new Error(body.error || "保存失败");
       setContent({
+        toolDirectory: normalizeToolPresentation(body.toolDirectory),
         carousel: body.carousel,
         notifications: body.notifications,
         modelVendors: body.modelVendors,
@@ -1117,6 +1156,7 @@ export default function PortalContentAdminContent({ initialSection = "carousel" 
         capabilityShowcase: body.capabilityShowcase,
       });
       const labels = {
+        tools: "工具目录",
         carousel: "轮播图",
         applications: "应用展示",
         capabilities: "能力展示",
@@ -1153,7 +1193,7 @@ export default function PortalContentAdminContent({ initialSection = "carousel" 
     <ConsolePage
       eyebrow="平台"
       title="门户内容管理"
-      description="轮播、首页应用、平台能力、通知与 API 模型可分别配置并发布到个人门户。"
+      description="轮播、首页应用、工具目录、平台能力、通知与 API 模型可分别配置并发布到个人门户。"
     >
       {loading ? (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -1162,9 +1202,9 @@ export default function PortalContentAdminContent({ initialSection = "carousel" 
         </p>
       ) : (
         <div className="portal-admin-content">
-          <nav className="portal-admin-section-nav" aria-label="门户内容模块">
+          <nav className="portal-admin-section-nav" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))" }} aria-label="门户内容模块">
             {portalAdminSections.map(({ id, label, description, icon: Icon }) => {
-              const count = id === "carousel"
+              const count = id === "tools" ? content.toolDirectory.length : id === "carousel"
                 ? content.carousel.length
                 : id === "applications"
                   ? content.applicationShowcase.length
@@ -1369,6 +1409,8 @@ export default function PortalContentAdminContent({ initialSection = "carousel" 
               </article>
             ))}
           </section> : null}
+          {activeSection === "tools" && <ToolDirectoryManager items={content.toolDirectory} saving={savingSection !== null} onSave={() => void save("tools")} onError={setError} onChange={(toolDirectory) => setContent((current) => ({ ...current, toolDirectory }))} />}
+
           {activeSection === "applications" ? <ApplicationShowcaseManager
             items={content.applicationShowcase}
             onChange={(applicationShowcase) =>

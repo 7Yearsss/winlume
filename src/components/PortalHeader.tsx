@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, Bot, ChevronDown, ChevronRight, Crown, KeyRound, LayoutDashboard, LogOut, WalletCards } from "lucide-react";
+import { Bell, Bot, ChevronDown, ChevronRight, ClipboardList, Crown, KeyRound, LayoutDashboard, LogOut, WalletCards } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useModals } from "@/components/providers";
 import { getUnreadPortalNotifications, markPortalNotificationsRead } from "@/lib/portal/notification-read";
@@ -123,9 +123,9 @@ export default function PortalHeader({ productMode, notifications: initialNotifi
                 <Link href="/docs">API 调用文档</Link>
               </div>
             </div>
-            <Link href="/studio" className={`portal-agent-entry${pathname.startsWith("/studio") ? " is-current" : ""}`}>
+            <Link href="/studio" target="_blank" rel="noopener noreferrer" className={`portal-agent-entry${pathname.startsWith("/studio") ? " is-current" : ""}`}>
               <Bot aria-hidden />
-              工作台
+              Agent工作台
             </Link>
           </nav>
           <button type="button" className="portal-membership-entry" onClick={openMembership}>
@@ -158,9 +158,9 @@ export default function PortalHeader({ productMode, notifications: initialNotifi
                 </Link>
                 <div className={`portal-account-submenu${accountMenuOpen ? " is-open" : ""}`}>
                   <Link href="/account"><LayoutDashboard aria-hidden />个人中心</Link>
-                  <Link href="/account/keys"><KeyRound aria-hidden />API Key</Link>
-                  <Link href="/account/wallet"><WalletCards aria-hidden />钱包</Link>
-                  <Link href="/studio"><Bot aria-hidden />工作区</Link>
+                  <Link href="/account/tasks"><ClipboardList aria-hidden />任务看板</Link>
+                  <Link href="/account/wallet"><WalletCards aria-hidden />钱包与充值</Link>
+                  <Link href="/account/keys"><KeyRound aria-hidden />API密钥</Link>
                   <button type="button" onClick={() => void handleSignOut()}><LogOut aria-hidden />退出登录</button>
                 </div>
               </div>

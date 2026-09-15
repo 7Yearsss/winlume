@@ -6,7 +6,7 @@ import { getPortalContent, invalidatePortalContentCache, normalizePortalContent,
 export const dynamic = "force-dynamic";
 
 const noStoreHeaders = { "cache-control": "no-store, max-age=0" };
-const editableSections = ["carousel", "notifications", "modelVendors", "applicationShowcase", "capabilityShowcase"] as const;
+const editableSections = ["toolDirectory", "carousel", "notifications", "modelVendors", "applicationShowcase", "capabilityShowcase"] as const;
 
 function errorResponse(error: unknown) {
   if (error instanceof PlatformAdminError) return NextResponse.json({ error: error.message }, { status: error.status });

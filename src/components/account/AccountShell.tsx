@@ -43,32 +43,32 @@ type NavGroup = {
 
 const groups: NavGroup[] = [
   {
-    label: "用户中心",
+    label: "账户",
     items: [
-      { href: "/account", label: "个人中心", mobileLabel: "个人", icon: LayoutDashboard, exact: true },
+      { href: "/account", label: "个人资料", mobileLabel: "资料", icon: LayoutDashboard, exact: true },
       { href: "/account/tasks", label: "任务看板", mobileLabel: "任务", icon: ClipboardList },
       { href: "/account/security", label: "账户安全", mobileLabel: "安全", icon: LockKeyhole },
+      { href: "/account/personalization", label: "偏好设置", mobileLabel: "设置", icon: Settings2 },
     ],
   },
   {
-    label: "充值及会员",
+    label: "会员与计费",
     items: [
       { href: "/account/wallet", label: "钱包与充值", mobileLabel: "钱包", icon: WalletCards, aliases: ["/account/usage"] },
-      { href: "/account/pricing", label: "会员购买", mobileLabel: "会员", icon: Receipt },
+      { href: "/account/pricing", label: "会员方案", mobileLabel: "会员", icon: Receipt },
       { href: "/account/enterprise", label: "对公结算", mobileLabel: "对公", icon: Building2 },
     ],
   },
   {
-    label: "工作区",
+    label: "开发与协作",
     items: [
-      { href: "/account/keys", label: "API Keys", mobileLabel: "Keys", icon: KeyRound },
-      { href: "/account/logs", label: "请求日志", mobileLabel: "日志", icon: ScrollText },
-      { href: "/account/personalization", label: "偏好设置", mobileLabel: "设置", icon: Settings2 },
-      { href: "/account/team", label: "团队", mobileLabel: "团队", icon: UsersRound },
+      { href: "/account/keys", label: "API密钥", mobileLabel: "密钥", icon: KeyRound },
+      { href: "/account/logs", label: "调用日志", mobileLabel: "日志", icon: ScrollText },
+      { href: "/account/team", label: "团队管理", mobileLabel: "团队", icon: UsersRound },
     ],
   },
   {
-    label: "邀请与社区",
+    label: "社区",
     items: [
       { href: "/account/invite", label: "邀请好友", mobileLabel: "邀请", icon: UserPlus },
       { href: "/account/community", label: "交流社区", mobileLabel: "社区", icon: Store },

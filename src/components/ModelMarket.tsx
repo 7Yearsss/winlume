@@ -411,29 +411,46 @@ const footerColumns = [
   {
     title: "产品",
     items: [
-      { label: "AI 应用", href: "/products?cate=app" },
-      { label: "工作台", href: "/studio" },
-      { label: "模型 API", href: "/products?cate=api" },
-      { label: "行业 Skill", href: "/studio/skills" },
+      { label: "Agent工作台", href: "/studio" },
+      { label: "API模型", href: "/products?cate=api" },
+      { label: "AI应用工具", href: "/products?cate=app" },
+      { label: "Skills", href: "/studio/skills" },
     ],
   },
 
   {
-    title: "账户",
+    title: "企业服务",
     items: [
-      { label: "计费标准", href: "/pricing" },
-      { label: "用量明细", href: "/account/usage" },
-      { label: "API Key", href: "/account/keys" },
-      { label: "团队空间", href: "/account/team" },
+      { label: "企业AI解决方案", href: "/business" },
+      { label: "私有化部署", href: "/business/deployment" },
+      { label: "系统集成", href: "/business/deployment" },
+      { label: "AI部署咨询", href: "/business/consultant" },
+    ],
+  },
+  {
+    title: "开发者",
+    items: [
+      { label: "API文档", href: "/docs" },
+      { label: "API密钥", href: "/account/keys" },
+      { label: "调用日志", href: "/account/logs" },
+      { label: "模型计费", href: "/pricing" },
+    ],
+  },
+  {
+    title: "账户与计费",
+    items: [
+      { label: "个人中心", href: "/account" },
+      { label: "会员方案", href: "/account/pricing" },
+      { label: "钱包与充值", href: "/account/wallet" },
     ],
   },
   {
     title: "支持",
     items: [
+      { label: "帮助中心", href: "/support/faq" },
       { label: "常见问题", href: "/support/faq" },
       { label: "联系支持", href: "/support/contact" },
       { label: "商务合作", href: "/business" },
-      { label: "© 2026 Reizo", href: "/" },
     ],
   },
 ] as const;
@@ -965,7 +982,7 @@ export default function ModelMarket({ initialContent }: { initialContent?: Porta
                   <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索任务、应用、模型或 API，例如：产品图、财务分析、PPT" aria-label="搜索 AI 能力" />
                   <HeroButton type="submit" variant="primary" size="md" className="portal-hero-search-button"><Search aria-hidden />搜索</HeroButton>
                 </form>
-                <PortalLink href="/studio" className="portal-workbench-button"><LayoutGrid aria-hidden />进入工作台<ChevronRight aria-hidden /></PortalLink>
+                <PortalLink href="/studio" className="portal-workbench-button"><LayoutGrid aria-hidden />进入Agent工作台<ChevronRight aria-hidden /></PortalLink>
               </div>
               <div className="portal-chip-list" aria-label="热门能力">
                 {searchSuggestions.map(({ label, icon: Icon, category }) => (
@@ -1222,8 +1239,20 @@ export default function ModelMarket({ initialContent }: { initialContent?: Porta
         </section>
 
         <section className="portal-bottom-explore portal-system-rail">
-          <div className="portal-capability-showcase">{visibleCapabilities.map((card) => <PortalLink href={card.href} aria-label={card.title} className={`portal-capability-hero is-${card.tone}${card.imageUrl ? " has-managed-image" : ""}`} key={card.id}>{card.imageUrl ? <Image className="portal-managed-capability-image" src={card.imageUrl} alt="" fill sizes="(max-width: 760px) 100vw, 34vw" priority unoptimized /> : <CapabilityEvidence kind={card.tone === "agent" ? "agent" : card.tone === "usage" ? "usage" : "models"} />}</PortalLink>)}</div>
-          <footer className="portal-bottom-footer"><div className="portal-bottom-brand"><strong><Image className="portal-footer-mark" src="/brand/logo-day.png" alt="" width={26} height={26} unoptimized />REIZO</strong><p>从 AI 能力到智能体，每一步都更简单。</p><small>© 2026 Reizo. All rights reserved.</small></div>{footerColumns.map((group) => <div key={group.title}><h3>{group.title}</h3>{group.items.slice(0, 3).map((item) => <PortalLink href={item.href} key={item.label}>{item.label}</PortalLink>)}</div>)}<div><h3>关注我们</h3><span className="portal-bottom-social">𝕏　in　◉　✉</span></div></footer>
+          <div className="portal-capability-showcase">{visibleCapabilities.map((card) => <div role="img" aria-label={card.title} className={`portal-capability-hero is-${card.tone}${card.imageUrl ? " has-managed-image" : ""}`} key={card.id}>{card.imageUrl ? <Image className="portal-managed-capability-image" src={card.imageUrl} alt="" fill sizes="(max-width: 760px) 100vw, 34vw" priority unoptimized /> : <CapabilityEvidence kind={card.tone === "agent" ? "agent" : card.tone === "usage" ? "usage" : "models"} />}</div>)}</div>
+          <footer className="portal-bottom-footer portal-five-column-footer">
+            <div className="portal-bottom-brand">
+              <strong><Image className="portal-footer-mark" src="/brand/logo-day.png" alt="" width={26} height={26} unoptimized />REIZO</strong>
+              <p>从 AI 能力到智能体，每一步都更简单。</p>
+              <small>© 2026 Reizo. All rights reserved.</small>
+            </div>
+            {footerColumns.map((group) => (
+              <div key={group.title}>
+                <h3>{group.title}</h3>
+                {group.items.map((item) => <PortalLink href={item.href} key={item.label}>{item.label}</PortalLink>)}
+              </div>
+            ))}
+          </footer>
         </section>
 
         <section className="portal-industry-section" aria-labelledby="portal-industry-title">
@@ -1399,7 +1428,7 @@ export default function ModelMarket({ initialContent }: { initialContent?: Porta
             </div>
           </section>
 
-          <footer className="portal-ed-footer">
+          <footer className="portal-ed-footer portal-five-column-footer">
             <div className="portal-ed-footer-brand">
               <strong><Image className="portal-footer-mark" src="/brand/logo-day.png" alt="" width={26} height={26} unoptimized />Reizo</strong>
               <p>把 AI 能力放进每天的工作里。</p>

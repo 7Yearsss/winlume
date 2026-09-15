@@ -2,6 +2,14 @@ import { describe, expect, it } from "vitest";
 import { defaultPortalContent, normalizePortalContent, toPublicPortalContent } from "./content-config";
 
 describe("portal content configuration", () => {
+  it("backfills tool covers and serves uploads through the public image endpoint", () => {
+    const content = normalizePortalContent({ toolDirectory: [{ id: "copywriting", imageUrl: "data:image/png;base64,aGVsbG8=", featured: false, enabled: false }] });
+    expect(content.toolDirectory).toHaveLength(25);
+    expect(content.toolDirectory[0]).toMatchObject({ id: "copywriting", featured: false, enabled: false });
+    const imageUrl = toPublicPortalContent(content).toolDirectory[0].imageUrl;
+    expect(imageUrl).toMatch(/^\/api\/portal\/image\?section=toolDirectory&id=copywriting&v=/);
+    expect(imageUrl).not.toContain("base64");
+  });
   it("backfills the two managed homepage showcases for legacy records", () => {
     const content = normalizePortalContent({ carousel: [], notifications: [], modelVendors: [] });
     expect(content.applicationShowcase).toEqual(defaultPortalContent.applicationShowcase);
