@@ -1802,7 +1802,7 @@ html[data-studio-theme="dark"] .login-modal-input:-webkit-autofill:focus {
   width: min(21rem, calc(100vw - 2rem));
   flex-direction: column;
   gap: 0.8rem;
-  overflow: visible !important;
+  overflow-y: auto;
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 16px;
   background: rgba(31, 31, 31, 0.98);
@@ -10048,26 +10048,54 @@ html[data-studio-theme="dark"] .composer-selected-model-chevron,
   overflow: hidden;
 }
 
-/* Model choices stay inside the collision-aware settings popover. */
+/* A single model-selection view keeps image settings out of the list. */
 .composer-settings-popover {
   max-height: min(38rem, var(--radix-popover-content-available-height, calc(100dvh - 24px)));
   overflow-y: auto;
   overscroll-behavior: contain;
 }
+.composer-settings-popover > * { flex-shrink: 0; }
+.composer-settings-popover[data-model-selection] {
+  overflow: hidden;
+}
+.composer-settings-popover[data-model-selection] .composer-model-field {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+.composer-settings-popover[data-model-selection] .composer-model-picker-anchor {
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
 .composer-settings-popover .composer-model-picker {
-  position: relative !important;
-  inset: auto !important;
-  width: 100% !important;
-  max-height: none !important;
-  margin-top: 8px;
+  position: relative;
+  inset: auto;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   box-shadow: none;
+  animation: none;
+}
+.composer-settings-popover .composer-model-stack {
+  min-height: 0;
+  flex: 1 1 auto;
 }
 .composer-settings-popover .composer-model-pane,
 .composer-model-search-results {
-  max-height: min(18rem, 40dvh);
+  min-height: 0;
+  max-height: min(22rem, 50dvh);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
+.composer-settings-popover .composer-model-pane > *,
+.composer-model-search-results > *,
+.composer-model-search { flex-shrink: 0; }
 .composer-model-search {
   width: calc(100% - 16px);
   margin: 8px;

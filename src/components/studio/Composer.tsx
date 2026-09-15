@@ -143,7 +143,7 @@ import {
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverAnchor,
 } from "@/components/ui/popover";
 import {
   Select,
@@ -570,6 +570,9 @@ export default function Composer({
   const editorRef = useRef<MentionPromptEditorHandle>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const modelPickerRef = useRef<HTMLDivElement>(null);
+  const modelButtonRef = useRef<HTMLButtonElement>(null);
+  const settingsButtonRef = useRef<HTMLButtonElement>(null);
+  const modelOpenedFromFooter = useRef(false);
   const skillMenuAnchorRef = useRef<HTMLButtonElement>(null);
   const mentionMenuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -891,53 +894,29 @@ export default function Composer({
 
   const openModelPicker = useCallback(() => {
     setModelPickerVendor(null);
+    setModelSearch("");
+    setCustomMode(false);
     setModelPickerOpen(true);
   }, []);
 
   const openModelPickerFromFooter = useCallback(() => {
+    modelOpenedFromFooter.current = true;
+    if (settingsOpen && modelPickerOpen) {
+      setSettingsOpen(false);
+      setModelPickerOpen(false);
+      return;
+    }
     setSettingsOpen(true);
     openModelPicker();
-  }, [openModelPicker]);
+  }, [openModelPicker, settingsOpen, modelPickerOpen]);
 
   useEffect(() => {
-    if (!modelPickerOpen) return;
-    const root = modelPickerRef.current;
-    const picker = root?.querySelector<HTMLElement>(".composer-model-picker");
-    const popover = root?.closest<HTMLElement>(".composer-settings-popover");
-    const fitPicker = () => {
-      if (!picker || !popover) return;
-      const pop = popover.getBoundingClientRect();
-      const pad = 12;
-      const available = Math.max(160, window.innerHeight - pop.top - pad);
-      picker.style.maxHeight = `${available}px`;
-    };
-    fitPicker();
-    root
-      ?.querySelector<HTMLElement>('button[aria-selected="true"]')
-      ?.scrollIntoView({ block: "nearest" });
-    const onPointerDown = (event: PointerEvent) => {
-      if (!root?.contains(event.target as Node)) {
-        setModelPickerOpen(false);
-        setModelPickerVendor(null);
-      }
-    };
-    const onKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      if (modelPickerVendor) {
-        setModelPickerVendor(null);
-        return;
-      }
-      setModelPickerOpen(false);
-    };
-    window.addEventListener("pointerdown", onPointerDown);
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("resize", fitPicker);
-    return () => {
-      window.removeEventListener("pointerdown", onPointerDown);
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("resize", fitPicker);
-    };
-  }, [modelPickerOpen, modelPickerVendor]);
+    if (!settingsOpen || !modelPickerOpen) return;
+    const frame = requestAnimationFrame(() => {
+      modelPickerRef.current?.querySelector<HTMLInputElement>("input")?.focus();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [settingsOpen, modelPickerOpen]);
 
   const skillsById = useMemo(() => {
     const map = new Map<string, SkillMeta>();
@@ -1053,6 +1032,14 @@ export default function Composer({
     setSlashRange(null);
     setMenuView({ kind: "root" });
   }, []);
+
+  useEffect(() => {
+    if (!settingsOpen) return;
+    closeMenu();
+    setMentionOpen(false);
+    setMentionRange(null);
+    setMentionQuery("");
+  }, [settingsOpen, closeMenu]);
 
   const pickSkillFromMenu = useCallback(
     (skill: SkillMeta) => {
@@ -2798,21 +2785,6 @@ export default function Composer({
             </button>
           </div>
           <div className="composer-footer-actions relative flex shrink-0 items-center gap-1.5">
-            <button
-              type="button"
-              disabled={disabled || modelsLoading}
-              onClick={openModelPickerFromFooter}
-              className="composer-selected-model"
-              title={`当前模型：${model || "选择模型"}`}
-              aria-label={`当前模型：${model || "选择模型"}`}
-            >
-              <span className="composer-selected-model-copy">
-                {activeModelVendor ? <VendorMark vendorKey={activeModelVendor.key} /> : null}
-                <span className="composer-selected-model-name">{model || "选择模型"}</span>
-                {activeModelVendor ? <span className="composer-selected-model-vendor">{activeModelVendor.name}</span> : null}
-              </span>
-              <ChevronDown className="composer-selected-model-chevron" aria-hidden />
-            </button>
             <Popover
               open={settingsOpen}
               onOpenChange={(open) => {
@@ -2829,28 +2801,68 @@ export default function Composer({
                 }
               }}
             >
-              <PopoverTrigger asChild>
+              <PopoverAnchor asChild>
+                <button
+                  ref={modelButtonRef}
+                  type="button"
+                  disabled={disabled || modelsLoading}
+                  onClick={openModelPickerFromFooter}
+                  aria-haspopup="dialog"
+                  aria-expanded={settingsOpen && modelPickerOpen}
+                  className="composer-selected-model"
+                  title={`当前模型：${model || "选择模型"}`}
+                  aria-label={`当前模型：${model || "选择模型"}`}
+                >
+                  <span className="composer-selected-model-copy">
+                    {activeModelVendor ? <VendorMark vendorKey={activeModelVendor.key} /> : null}
+                    <span className="composer-selected-model-name">{model || "选择模型"}</span>
+                    {activeModelVendor ? <span className="composer-selected-model-vendor">{activeModelVendor.name}</span> : null}
+                  </span>
+                  <ChevronDown className="composer-selected-model-chevron" aria-hidden />
+                </button>
+              </PopoverAnchor>
                 <button
                   type="button"
                   disabled={disabled}
                   className={`composer-icon-button ${settingsOpen ? "composer-icon-button-active" : ""}`}
+                  ref={settingsButtonRef}
+                  onClick={() => { modelOpenedFromFooter.current = false; setModelPickerOpen(false); setSettingsOpen(!settingsOpen || modelPickerOpen); }}
+                  aria-haspopup="dialog"
+                  aria-expanded={settingsOpen && !modelPickerOpen}
                   title="高级设置"
                   aria-label="高级设置"
                 >
                   <SlidersHorizontal className="h-[18px] w-[18px]" />
                 </button>
-              </PopoverTrigger>
               <PopoverContent
                 align="end"
                 side="top"
                 sideOffset={8}
+                collisionPadding={12}
+                data-model-selection={modelPickerOpen || undefined}
+                aria-label={modelPickerOpen ? "选择模型" : "高级设置"}
+                onInteractOutside={(event) => {
+                  const target = event.target as Node;
+                  if (modelButtonRef.current?.contains(target) || settingsButtonRef.current?.contains(target)) event.preventDefault();
+                }}
+                onEscapeKeyDown={(event) => {
+                  if (modelPickerOpen && modelPickerVendor && !modelSearch.trim()) {
+                    event.preventDefault();
+                    setModelPickerVendor(null);
+                  }
+                }}
+                onCloseAutoFocus={(event) => {
+                  event.preventDefault();
+                  (modelOpenedFromFooter.current ? modelButtonRef : settingsButtonRef).current?.focus();
+                }}
                 className="composer-settings-popover w-[21rem] max-w-[calc(100vw-2rem)]"
               >
                 <div className="composer-settings-heading">
-                  <span>高级设置</span>
+                  <span>{modelPickerOpen ? "选择模型" : "高级设置"}</span>
+                  <button type="button" aria-label="关闭设置" onClick={() => { setSettingsOpen(false); setModelPickerOpen(false); }}><X className="h-4 w-4" /></button>
                 </div>
-                <label className="composer-settings-field">
-                  <span>模型</span>
+                <div className="composer-settings-field composer-model-field">
+                  {!modelPickerOpen ? <span>模型</span> : null}
                   {customMode && allowCustomModel ? (
                     <input
                       type="text"
@@ -2861,7 +2873,7 @@ export default function Composer({
                     />
                   ) : (
                       <div ref={modelPickerRef} className="composer-model-picker-anchor">
-                      <button
+                      {!modelPickerOpen ? <button
                         type="button"
                         disabled={disabled || modelsLoading}
                         onClick={() => {
@@ -2878,12 +2890,12 @@ export default function Composer({
                           <span className="truncate">{model || "选择模型"}</span>
                         </span>
                         <ChevronDown className={`h-4 w-4 shrink-0 opacity-50 transition-transform ${modelPickerOpen ? "rotate-180" : ""}`} />
-                      </button>
+                      </button> : null}
                       {modelPickerOpen ? (
                         <div
                           className="composer-model-picker"
                           data-view={browsingVendor ? "models" : "vendors"}
-                          role="dialog"
+                          role="group"
                           aria-label={browsingVendor ? browsingVendor.name : "选择厂商"}
                         >
                           <input aria-label="搜索模型或提供商" placeholder="搜索模型或提供商…" value={modelSearch} onChange={(event) => setModelSearch(event.target.value)} className="composer-model-search" />
@@ -2980,7 +2992,8 @@ export default function Composer({
                       ) : null}
                     </div>
                   )}
-                </label>
+                </div>
+                {!modelPickerOpen ? <>
                 {customMode && allowCustomModel ? (
                   <button type="button" className="composer-settings-reset" onClick={() => setCustomMode(false)}>
                     使用模型列表
@@ -3028,6 +3041,7 @@ export default function Composer({
                     </label>
                   </div>
                 ) : null}
+                </> : null}
               </PopoverContent>
             </Popover>
             <Select
