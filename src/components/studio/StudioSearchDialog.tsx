@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  Archive,
+  ArchiveRestore,
   ExternalLink,
   LoaderCircle,
   Pencil,
@@ -10,6 +12,7 @@ import {
   Search,
   Trash2,
 } from "lucide-react";
+import { useWorkspaceTabs } from "@/lib/studio/workspace-tabs";
 import Modal from "@/components/Modal";
 import {
   deleteSession,
@@ -64,19 +67,25 @@ function visiblePreviewMessages(messages: Message[]) {
 
 export default function StudioSearchDialog({
   open,
+  initialArchived = false,
   onClose,
 }: {
   open: boolean;
+  initialArchived?: boolean;
   onClose: () => void;
 }) {
   return (
-    <Modal open={open} onClose={onClose} label="快速搜索" size="overlay">
-      <SearchPanel onClose={onClose} />
+    <Modal open={open} onClose={onClose} label={initialArchived ? "已归档对话" : "对话管理"} size="overlay">
+      <SearchPanel key={`${open}-${initialArchived}`} initialArchived={initialArchived} onClose={onClose} />
     </Modal>
   );
 }
 
-function SearchPanel({ onClose }: { onClose: () => void }) {
+function SearchPanel({ onClose, initialArchived }: { onClose: () => void; initialArchived: boolean }) {
+  const { tabs, closeTab } = useWorkspaceTabs();
+  const [archived, setArchived] = useState(initialArchived);
+  const [changingId, setChangingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   const [query, setQuery] = useState("");
@@ -93,14 +102,16 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    void listSessions()
+    setSessions([]);
+    setError(null);
+    void listSessions(undefined, archived)
       .then((items) => {
         if (!cancelled) {
           setSessions([...items].sort((left, right) => right.updatedAt.localeCompare(left.updatedAt)));
         }
       })
       .catch(() => {
-        if (!cancelled) setSessions([]);
+        if (!cancelled) setError("加载对话失败，请关闭后重试。");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -108,7 +119,7 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [archived]);
 
   const items = useMemo<SearchItem[]>(() => {
     const q = query.trim().toLowerCase();
@@ -116,12 +127,13 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
       if (!q) return true;
       return session.title.toLowerCase().includes(q) || session.model.toLowerCase().includes(q);
     });
-    return [{ kind: "action", id: "new-chat" }, ...matched.map((session) => ({ kind: "session" as const, session }))];
-  }, [query, sessions]);
+    const results: SearchItem[] = matched.map(session => ({ kind: "session", session }));
+    return archived ? results : [{ kind: "action", id: "new-chat" }, ...results];
+  }, [query, sessions, archived]);
 
   useEffect(() => {
     setActiveIndex(0);
-  }, [query]);
+  }, [query, archived]);
 
   useEffect(() => {
     if (activeIndex >= items.length) setActiveIndex(Math.max(0, items.length - 1));
@@ -173,6 +185,22 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
     const updated = await patchSession(editingId, { title });
     setSessions((current) => current.map((session) => (session.id === updated.id ? updated : session)));
     setEditingId(null);
+  }
+
+  async function toggleArchive(session: Session) {
+    setChangingId(session.id);
+    setError(null);
+    try {
+      await patchSession(session.id, { archived: !archived });
+      setSessions(current => current.filter(item => item.id !== session.id));
+      if (!archived) {
+        const tab = tabs.find(item => item.kind === "session" && item.sessionId === session.id);
+        if (tab) closeTab(tab.id);
+        else if (currentId === session.id) router.push("/studio");
+      }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "更新归档状态失败，请重试。");
+    } finally { setChangingId(null); }
   }
 
   async function remove(session: Session) {
@@ -227,14 +255,20 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
         />
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-[minmax(20rem,26rem)_minmax(0,1fr)]">
+      <div className="flex shrink-0 items-center gap-2 border-b border-[#ece7df] px-4 py-2">
+        <button type="button" aria-pressed={!archived} disabled={changingId !== null} className={`rounded-lg px-3 py-2 text-sm text-[#615A73] ${!archived ? "bg-[#f3efe8]" : ""}`} onClick={() => { setArchived(false); setEditingId(null); }}>对话</button>
+        <button type="button" aria-pressed={archived} disabled={changingId !== null} className={`rounded-lg px-3 py-2 text-sm text-[#615A73] ${archived ? "bg-[#f3efe8]" : ""}`} onClick={() => { setArchived(true); setEditingId(null); }}>已归档</button>
+        <span className="ml-auto text-xs text-[#8A8298]">归档保留聊天内容，可随时恢复</span>
+      </div>
+      {error ? <p role="alert" className="px-4 py-2 text-sm text-red-500">{error}</p> : null}
+      <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[minmax(20rem,26rem)_minmax(0,1fr)]">
         <div className="min-h-0 overflow-y-auto border-r border-[#ece7df] p-2">
           {loading ? (
             <p className="flex items-center gap-1.5 px-3 py-6 text-sm text-[#8A8298]">
               <LoaderCircle className="size-4 animate-spin" />
               正在加载…
             </p>
-          ) : (
+          ) : items.length === 0 ? <p className="px-3 py-6 text-sm text-[#8A8298]">{query ? "没有匹配的对话" : "暂无已归档对话"}</p> : (
             items.map((item, index) => {
               if (item.kind === "action") {
                 return (
@@ -304,9 +338,12 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
                         {relativeTime(item.session.updatedAt, now)}
                       </span>
                     )}
-                    <span className={`shrink-0 items-center gap-0.5 ${selected ? "flex" : "hidden group-hover:flex"}`}>
+                    <span className="flex shrink-0 items-center gap-0.5">
                       <button type="button" className="rounded-md p-1 text-[#615A73] hover:bg-white" aria-label="打开" onClick={() => go(item)}>
                         <ExternalLink className="size-3.5" />
+                      </button>
+                      <button type="button" className="rounded-md p-1 text-[#615A73] hover:bg-white" aria-label={archived ? "恢复对话" : "归档对话"} title={archived ? "恢复对话" : "归档对话"} disabled={changingId !== null} onClick={() => void toggleArchive(item.session)}>
+                        {changingId === item.session.id ? <LoaderCircle className="size-3.5 animate-spin" /> : archived ? <ArchiveRestore className="size-3.5" /> : <Archive className="size-3.5" />}
                       </button>
                       <button type="button" className="rounded-md p-1 text-[#615A73] hover:bg-white" aria-label="重命名" onClick={() => startEdit(item.session)}>
                         <Pencil className="size-3.5" />
@@ -322,11 +359,11 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
           )}
         </div>
 
-        <div className="min-h-0 overflow-y-auto px-5 py-5">
+        <div className="hidden min-h-0 overflow-y-auto px-5 py-5 md:block">
           {!active || active.kind === "action" ? (
             <div>
-              <h2 className="text-base font-semibold text-[#241E36]">开始新对话</h2>
-              <p className="mt-2 text-sm leading-6 text-[#8A8298]">打开工作台，描述你想完成的事。</p>
+              <h2 className="text-base font-semibold text-[#241E36]">{archived ? "已归档对话" : "开始新对话"}</h2>
+              <p className="mt-2 text-sm leading-6 text-[#8A8298]">{archived ? "选择对话查看记录，或恢复到对话列表。" : "打开工作台，描述你想完成的事。"}</p>
             </div>
           ) : previewLoading ? (
             <p className="flex items-center gap-1.5 text-sm text-[#8A8298]">

@@ -15,7 +15,8 @@ export async function GET(request: NextRequest) {
   const requestedProjectId = request.nextUrl.searchParams.get("projectId");
   const projectId = requestedProjectId?.trim() || undefined;
   const sessions = await webStore.sessions.listSessions(userId, projectId);
-  return NextResponse.json({ sessions });
+  const archived = request.nextUrl.searchParams.get("archived") === "true";
+  return NextResponse.json({ sessions: sessions.filter(session => Boolean(session.archived) === archived) });
 }
 
 /** POST /api/sessions — create a session; body: { model?, title? } */

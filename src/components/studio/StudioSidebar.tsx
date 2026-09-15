@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  Archive,
   ChevronRight,
   CircleAlert,
   FolderKanban,
@@ -18,7 +19,7 @@ import {
 } from "lucide-react";
 import { useModals } from "@/components/providers";
 import ReizoLogo from "@/components/ReizoLogo";
-import { listSessions } from "@/lib/studio/api";
+import { listSessions, patchSession } from "@/lib/studio/api";
 import { listProjects } from "@/lib/studio/api";
 import type { Project, Session } from "@/lib/agent/types";
 import { useWorkspaceTabs } from "@/lib/studio/workspace-tabs";
@@ -85,12 +86,16 @@ export default function StudioSidebar({
   const pathname = usePathname();
   const router = useRouter();
   const { account } = useModals();
-  const { openHomeTab } = useWorkspaceTabs();
+  const { openHomeTab, tabs, closeTab } = useWorkspaceTabs();
   const [recent, setRecent] = useState<Session[]>([]);
   const [recentLoading, setRecentLoading] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectsLoading, setProjectsLoading] = useState(false);
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
+  const [archiveView, setArchiveView] = useState(false);
+  const [sessionRevision, setSessionRevision] = useState(0);
+  const [archiving, setArchiving] = useState<string | null>(null);
+  const [archiveError, setArchiveError] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [projectsOpen, toggleProjectsOpen] = usePersistedOpen("reizo:studio-sidebar-projects");
@@ -118,12 +123,12 @@ export default function StudioSidebar({
       const typing = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
       if ((event.key === "k" || event.key === "K") && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
-        setSearchOpen(true);
+        setArchiveView(false); setSearchOpen(true);
         return;
       }
       if (event.key === "/" && !event.metaKey && !event.ctrlKey && !event.altKey && !typing) {
         event.preventDefault();
-        setSearchOpen(true);
+        setArchiveView(false); setSearchOpen(true);
       }
     }
     window.addEventListener("keydown", onKey);
@@ -131,7 +136,27 @@ export default function StudioSidebar({
   }, []);
 
   useEffect(() => {
-    if (!account) return;
+    const refresh = () => setSessionRevision(value => value + 1);
+    window.addEventListener("reizo:sessions-changed", refresh);
+    return () => window.removeEventListener("reizo:sessions-changed", refresh);
+  }, []);
+
+  async function archive(session: Session) {
+    setArchiving(session.id);
+    setArchiveError(null);
+    try {
+      await patchSession(session.id, { archived: true });
+      setRecent(current => current.filter(item => item.id !== session.id));
+      const tab = tabs.find(item => item.kind === "session" && item.sessionId === session.id);
+      if (tab) closeTab(tab.id);
+      else if (viewedSessionId === session.id) router.push("/studio");
+    } catch (error) {
+      setArchiveError(error instanceof Error ? error.message : "归档失败，请重试");
+    } finally { setArchiving(null); }
+  }
+
+  useEffect(() => {
+    if (!account) { setRecent([]); return; }
     let cancelled = false;
     const timer = window.setTimeout(() => {
       if (cancelled) return;
@@ -151,7 +176,7 @@ export default function StudioSidebar({
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [account, pathname]);
+  }, [account, pathname, sessionRevision]);
 
   useEffect(() => {
     if (!account) return;
@@ -206,7 +231,7 @@ export default function StudioSidebar({
         </Link>
         <button
           type="button"
-          onClick={() => setSearchOpen(true)}
+          onClick={() => { setArchiveView(false); setSearchOpen(true); }}
           title="快速搜索"
           aria-label="快速搜索"
           className="studio-search-toggle inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-[background-color,color,transform] duration-150 active:scale-[0.97]"
@@ -348,6 +373,8 @@ export default function StudioSidebar({
             <ChevronRight className={`size-3.5 shrink-0 transition-transform ${recentsOpen ? "rotate-90" : ""}`} />
             对话
           </button>
+          {account ? <button type="button" onClick={() => { setArchiveView(true); setSearchOpen(true); }} className="studio-nav-item flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-[#8A8298]"><Archive className="size-3.5" />已归档</button> : null}
+          {archiveError ? <p role="alert" className="px-3 py-2 text-xs text-red-500">{archiveError}</p> : null}
           {recentsOpen ? (
             <div className="min-h-0 flex-1 overflow-y-auto px-1 pb-2">
               {!account ? (
@@ -364,10 +391,10 @@ export default function StudioSidebar({
                   {recent.map((s) => {
                     const active = pathname === `/studio/c/${s.id}`;
                     return (
-                      <li key={s.id}>
+                      <li key={s.id} className="flex min-w-0 items-center">
                         <Link
                           href={`/studio/c/${s.id}`}
-                          className={`studio-nav-item flex items-center gap-2 rounded-[12px] px-3 py-2 text-[13px] outline-none transition-colors focus-visible:outline-none ${
+                          className={`studio-nav-item flex min-w-0 flex-1 items-center gap-2 rounded-[12px] px-3 py-2 text-[13px] outline-none transition-colors focus-visible:outline-none ${
                             active ? "studio-nav-active" : "text-[#615A73]"
                           }`}
                           title={s.title}
@@ -380,6 +407,9 @@ export default function StudioSidebar({
                             />
                           ) : null}
                         </Link>
+                        <button type="button" className="studio-nav-item shrink-0 rounded-md p-2 text-[#8A8298]" aria-label={`归档「${s.title || "未命名对话"}」`} title="归档对话" disabled={archiving !== null} onClick={() => void archive(s)}>
+                          {archiving === s.id ? <LoaderCircle className="size-3.5 animate-spin" /> : <Archive className="size-3.5" />}
+                        </button>
                       </li>
                     );
                   })}
@@ -415,7 +445,7 @@ export default function StudioSidebar({
           router.push(`/studio/p/${encodeURIComponent(project.id)}`);
         }}
       />
-      <StudioSearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <StudioSearchDialog initialArchived={archiveView} open={searchOpen} onClose={() => setSearchOpen(false)} />
     </aside>
   );
 }

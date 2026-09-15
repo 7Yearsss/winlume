@@ -11,7 +11,7 @@ export interface SessionStore {
     userId: string,
     sessionId: string,
     patch: Partial<
-      Pick<Session, "title" | "model" | "pinnedSkillIds" | "codexThreadId">
+      Pick<Session, "title" | "model" | "pinnedSkillIds" | "codexThreadId" | "archived">
     > & {
       projectId?: string | null;
       /** Omit to preserve; null explicitly clears persisted launch intent. */

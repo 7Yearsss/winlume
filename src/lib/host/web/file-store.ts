@@ -106,6 +106,7 @@ function createSessionStore(rootDir: string): SessionStore {
         userId: input.userId,
         title: input.title,
         model: input.model,
+        ...(input.archived !== undefined ? { archived: input.archived } : {}),
         ...(input.projectId !== undefined ? { projectId: input.projectId } : {}),
         ...(input.pinnedSkillIds !== undefined
           ? { pinnedSkillIds: input.pinnedSkillIds }
@@ -136,6 +137,7 @@ function createSessionStore(rootDir: string): SessionStore {
 
       const session: Session = {
         ...file.session,
+        ...(patch.archived !== undefined ? { archived: patch.archived } : {}),
         ...(patch.title !== undefined ? { title: patch.title } : {}),
         ...(patch.model !== undefined ? { model: patch.model } : {}),
         // Allow [] to clear pins; omit key when undefined so pins are unchanged

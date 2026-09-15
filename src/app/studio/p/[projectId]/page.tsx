@@ -74,7 +74,9 @@ export default function StudioProjectPage() {
     const timer = window.setTimeout(() => {
       void load();
     }, 0);
-    return () => window.clearTimeout(timer);
+    const refresh = () => void load();
+    window.addEventListener("reizo:sessions-changed", refresh);
+    return () => { window.clearTimeout(timer); window.removeEventListener("reizo:sessions-changed", refresh); };
   }, [account, load]);
 
   const headerContent = useMemo(() => project ? (

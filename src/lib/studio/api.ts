@@ -97,8 +97,11 @@ async function parseJson<T>(response: Response): Promise<T> {
   }
 }
 
-export async function listSessions(projectId?: string): Promise<Session[]> {
-  const query = projectId ? `?projectId=${encodeURIComponent(projectId)}` : "";
+export async function listSessions(projectId?: string, archived = false): Promise<Session[]> {
+  const params = new URLSearchParams();
+  if (projectId) params.set("projectId", projectId);
+  if (archived) params.set("archived", "true");
+  const query = params.size ? `?${params}` : "";
   const response = await fetch(`/api/sessions${query}`, {
     headers: withUserHeaders(),
     credentials: "same-origin",
@@ -279,6 +282,7 @@ export async function getSessionBundle(sessionId: string): Promise<{
 export async function patchSession(
   id: string,
   patch: {
+    archived?: boolean;
     title?: string;
     model?: string;
     projectId?: string | null;
@@ -305,7 +309,9 @@ export async function patchSession(
       response.status,
     );
   }
-  return parseJson<Session>(response);
+  const session = await parseJson<Session>(response);
+  if (patch.archived !== undefined) window.dispatchEvent(new Event("reizo:sessions-changed"));
+  return session;
 }
 
 export async function deleteSession(id: string): Promise<void> {

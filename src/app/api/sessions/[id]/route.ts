@@ -39,6 +39,7 @@ export async function PATCH(request: NextRequest, context: IdContext) {
   const { id } = await context.params;
 
   let body: {
+    archived?: boolean;
     title?: string;
     model?: string;
     projectId?: string | null;
@@ -49,6 +50,7 @@ export async function PATCH(request: NextRequest, context: IdContext) {
     const text = await request.text();
     if (text.trim()) {
       body = JSON.parse(text) as {
+        archived?: boolean;
         title?: string;
         model?: string;
         projectId?: string | null;
@@ -60,13 +62,24 @@ export async function PATCH(request: NextRequest, context: IdContext) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json({ error: "Expected a JSON object" }, { status: 400 });
+  }
+
   const patch: {
+    archived?: boolean;
     title?: string;
     model?: string;
     pinnedSkillIds?: string[];
     projectId?: string | null;
     capabilityPresetId?: string | null;
   } = {};
+  if (Object.hasOwn(body, "archived")) {
+    if (typeof body.archived !== "boolean") {
+      return NextResponse.json({ error: "archived must be a boolean" }, { status: 400 });
+    }
+    patch.archived = body.archived;
+  }
   if (typeof body.title === "string") patch.title = body.title;
   if (typeof body.model === "string") patch.model = body.model;
   if (body.projectId === null) patch.projectId = null;

@@ -5,6 +5,8 @@ export interface Session {
   userId: string;
   title: string;
   model: string;
+  /** Hidden from active lists until explicitly restored; history remains intact. */
+  archived?: boolean;
   /** Optional project scope shared by multiple conversations. */
   projectId?: string;
   /** Skills applied to every turn unless overridden; UI may pin/unpin */
