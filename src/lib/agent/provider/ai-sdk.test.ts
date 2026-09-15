@@ -178,3 +178,31 @@ describe("streamAiSdkGatewayChat auth", () => {
     });
   });
 });
+
+
+describe("AI SDK streaming errors", () => {
+  it.each([
+    [{ message: "Upstream rate limit exceeded, please retry later", code: "rate_limit_exceeded" }, "模型服务当前请求过多，请稍后重试或切换模型。"],
+    [{ message: "status_code=524, bad response status code 524", type: "upstream_error" }, "模型服务响应超时，请稍后重试或切换模型。"],
+    [{ message: "Requested model is unavailable", code: "model_not_found" }, "当前模型暂不可用，请切换模型后重试。"],
+  ])("preserves a readable error after the stream has started: %j", async (error, message) => {
+    const response = [
+      `data: ${JSON.stringify({ id: "chatcmpl-test", choices: [{ index: 0, delta: { content: "\n" }, finish_reason: null }] })}`,
+      "",
+      `data: ${JSON.stringify({ error })}`,
+      "",
+      "data: [DONE]",
+      "",
+    ].join("\n");
+    const chunks: ChatChunk[] = [];
+    for await (const chunk of streamAiSdkGatewayChat({
+      model: "gpt-6-astra",
+      messages: [{ role: "user", content: "hello" }],
+      baseUrl: "https://gateway.test",
+      fetchImpl: async () => new Response(response, { headers: { "content-type": "text/event-stream" } }),
+    })) chunks.push(chunk);
+    expect(chunks).toContainEqual({ kind: "error", message });
+    expect(chunks.some(chunk => chunk.kind === "error" && chunk.message === "[object Object]")).toBe(false);
+    expect(chunks.some(chunk => chunk.kind === "tool_calls")).toBe(false);
+  });
+});

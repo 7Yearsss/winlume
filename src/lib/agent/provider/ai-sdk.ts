@@ -1,3 +1,4 @@
+import { providerErrorMessage } from "./errors";
 /**
  * Vercel AI SDK transport for the existing OpenAI-compatible gateway.
  *
@@ -259,10 +260,7 @@ export async function* streamAiSdkGatewayChat(
           failed = true;
           yield {
             kind: "error",
-            message:
-              chunk.error instanceof Error
-                ? chunk.error.message
-                : String(chunk.error ?? "AI SDK stream failed"),
+            message: providerErrorMessage(chunk.error),
           };
           break;
         default:
@@ -280,7 +278,7 @@ export async function* streamAiSdkGatewayChat(
     if (params.signal?.aborted) throw error;
     yield {
       kind: "error",
-      message: error instanceof Error ? error.message : "AI SDK request failed",
+      message: providerErrorMessage(error),
     };
   }
 }
