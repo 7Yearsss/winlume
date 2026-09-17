@@ -296,7 +296,6 @@ export default function AccountWalletContent() {
   return (
     <ConsolePage
       title="钱包与充值"
-      description="集中查看余额、在线充值、兑换码、消费记录和消耗趋势。"
     >
       {organizations.length > 1 && organizationId ? (
         <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">

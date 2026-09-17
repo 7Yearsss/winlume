@@ -22,7 +22,6 @@ export default function AccountCommunityContent() {
   return (
     <ConsolePage
       title="交流社区"
-      description="这里只放入口。技能在 Studio，人格和工具预设在工作区设置里。"
     >
       <div className="grid gap-4 md:grid-cols-2">
         {collections.map((item) => {

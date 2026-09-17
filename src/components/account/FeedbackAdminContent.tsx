@@ -92,7 +92,7 @@ export default function FeedbackAdminContent() {
   }
   if (account?.platform_role !== "admin") {
     return (
-      <ConsolePage title="反馈列表" description="仅平台管理员可以查看用户提交的反馈。">
+      <ConsolePage title="反馈列表">
         <ConsoleEmptyState title="没有权限" description="当前账户不是平台 admin。" />
       </ConsolePage>
     );
@@ -100,9 +100,7 @@ export default function FeedbackAdminContent() {
 
   return (
     <ConsolePage
-      eyebrow="平台"
       title="反馈列表"
-      description="查看用户提交的 Bug 报告与功能建议。"
       actions={
         <select
           className="h-9 rounded-md border border-border bg-background px-3 text-sm"

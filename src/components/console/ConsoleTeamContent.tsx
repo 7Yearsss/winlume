@@ -372,7 +372,6 @@ export default function ConsoleTeamContent() {
   return (
     <ConsolePage
       title="工作区成员"
-      description="谁在这个工作区、各自什么角色。额度和密钥不在这里管。"
       actions={team?.canManageMembers ? (
         <Button type="button" onClick={() => setShowAdd(true)}>
           <Plus data-icon="inline-start" />

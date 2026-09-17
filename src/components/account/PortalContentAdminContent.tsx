@@ -1181,7 +1181,6 @@ export default function PortalContentAdminContent({ initialSection = "carousel" 
     return (
       <ConsolePage
         title="门户内容管理"
-        description="仅平台管理员可以管理首页内容、通知与 API 模型展示。"
       >
         <ConsoleEmptyState
           title="没有权限"
@@ -1191,9 +1190,7 @@ export default function PortalContentAdminContent({ initialSection = "carousel" 
     );
   return (
     <ConsolePage
-      eyebrow="平台"
       title="门户内容管理"
-      description="轮播、首页应用、工具目录、平台能力、通知与 API 模型可分别配置并发布到个人门户。"
     >
       {loading ? (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">

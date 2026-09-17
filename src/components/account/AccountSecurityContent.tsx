@@ -4,6 +4,7 @@ import { KeyRound, LockKeyhole, ShieldCheck } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useModals } from "@/components/providers";
+import { ConsolePage } from "@/components/console/ConsolePage";
 import { changePassword, logout } from "@/lib/account";
 
 export default function AccountSecurityContent() {
@@ -37,8 +38,8 @@ export default function AccountSecurityContent() {
   }
 
   return (
-    <div className="account-security">
-      <header><p>用户中心 / 账户安全</p><h1>修改密码</h1><span>修改后会退出当前登录，请使用新密码重新登录。</span></header>
+    <ConsolePage title="账户安全">
+      <div className="account-security">
       <section className="account-security-panel">
         <div className="account-security-intro"><span><ShieldCheck aria-hidden /></span><div><h2>保护你的账户</h2><p>新密码须为 8 至 72 个 UTF-8 字节，建议使用未在其他网站使用过的密码。</p></div></div>
         <form onSubmit={submit}>
@@ -49,6 +50,7 @@ export default function AccountSecurityContent() {
           <button type="submit" disabled={saving}><KeyRound aria-hidden />{saving ? "正在修改…" : "确认修改密码"}</button>
         </form>
       </section>
-    </div>
+      </div>
+    </ConsolePage>
   );
 }

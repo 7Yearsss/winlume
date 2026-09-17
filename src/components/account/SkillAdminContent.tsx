@@ -202,7 +202,7 @@ export default function SkillAdminContent() {
 
   if (account?.platform_role !== "admin") {
     return (
-      <ConsolePage title="Skill 配置" description="仅平台管理员可以管理 Skill 目录。">
+      <ConsolePage title="Skill 配置">
         <ConsoleEmptyState title="没有权限" description="当前账户不是平台 admin。" />
       </ConsolePage>
     );
@@ -210,9 +210,7 @@ export default function SkillAdminContent() {
 
   return (
     <ConsolePage
-      eyebrow="平台"
       title="Skill 配置"
-      description="Skill 已入库。可启用、精选、改分类，也可同步内置目录和开源 Skill 仓库。"
       actions={
         <div className="flex flex-wrap gap-2">
           <Button

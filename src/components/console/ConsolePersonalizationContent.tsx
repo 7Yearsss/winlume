@@ -249,7 +249,7 @@ export default function ConsolePersonalizationContent() {
     }
   }
 
-  return <ConsolePage title="偏好设置" description="上下文按优先级组合：运行时 > 项目 > 工作区 > 个人 > 系统。" actions={canManage ? <><button type="button" onClick={() => setDialog({ kind: "personality", preset: null })} className="inline-flex items-center gap-2 border border-line bg-surface px-3 py-2 text-sm font-medium text-ink-800 hover:bg-canvas"><Plus className="h-4 w-4" />新建人格</button><button type="button" onClick={() => setDialog({ kind: "tool", preset: null })} className="inline-flex items-center gap-2 bg-ink-950 px-3 py-2 text-sm font-medium text-white hover:bg-ink-800"><Plus className="h-4 w-4" />新建工具</button></> : undefined}>
+  return <ConsolePage title="偏好设置" actions={canManage ? <><button type="button" onClick={() => setDialog({ kind: "personality", preset: null })} className="inline-flex items-center gap-2 border border-line bg-surface px-3 py-2 text-sm font-medium text-ink-800 hover:bg-canvas"><Plus className="h-4 w-4" />新建人格</button><button type="button" onClick={() => setDialog({ kind: "tool", preset: null })} className="inline-flex items-center gap-2 bg-ink-950 px-3 py-2 text-sm font-medium text-white hover:bg-ink-800"><Plus className="h-4 w-4" />新建工具</button></> : undefined}>
     {error ? <p role="alert" className="mb-4 border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}</p> : null}
     {loading ? <div className="flex min-h-48 items-center justify-center gap-2 text-sm text-ink-500"><LoaderCircle className="h-4 w-4 animate-spin" />正在加载预设…</div> : null}
     {!loading && data ? <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_19rem]">

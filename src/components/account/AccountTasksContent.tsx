@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { Activity, CheckCircle2, ChevronDown, FileCog, MoreVertical, RefreshCw, Search, TimerReset, Workflow } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ConsolePage } from "@/components/console/ConsolePage";
+import { StatefulButton } from "@/components/motion/button/stateful";
+import { Tabs, TabsList, TabsTrigger } from "@/components/motion/tabs";
 import type { Session } from "@/lib/agent/types";
 
 type TaskFilter = "all" | "running" | "queued" | "completed";
@@ -74,11 +77,22 @@ export default function AccountTasksContent() {
   ];
 
   return (
-    <div className="account-task-board">
-      <header className="account-task-board-head">
-        <div><h1>任务看板</h1><span>查看工作台中任务的实时进度与状态</span></div>
-        <button type="button" onClick={() => void load()}><RefreshCw aria-hidden />刷新</button>
-      </header>
+    <ConsolePage
+      title="任务看板"
+      actions={
+        <StatefulButton
+          state={loading ? "loading" : "idle"}
+          loadingText="刷新中"
+          icon={<RefreshCw className="h-4 w-4" aria-hidden />}
+          variant="secondary"
+          size="sm"
+          onClick={() => void load()}
+        >
+          刷新
+        </StatefulButton>
+      }
+    >
+      <div className="account-task-board">
 
       <section className="account-task-summary" aria-label="任务概览">
         <article><span className="account-task-summary-icon"><FileCog aria-hidden /></span><div><small>全部任务</small><strong>{counts.all}</strong><p>进行中 {counts.running} · 排队中 {counts.queued} · 已完成 {counts.completed}</p></div></article>
@@ -90,9 +104,11 @@ export default function AccountTasksContent() {
       <div className="account-task-board-layout">
         <main>
           <div className="account-task-board-filters">
-            <div className="account-task-filter-tabs" role="tablist" aria-label="任务状态筛选">
-              {filters.map((item) => <button key={item.id} type="button" role="tab" aria-selected={filter === item.id} className={filter === item.id ? "is-active" : ""} onClick={() => setFilter(item.id)}>{item.label}</button>)}
-            </div>
+            <Tabs value={filter} onValueChange={(value) => setFilter(value as TaskFilter)} variant="pill">
+              <TabsList aria-label="任务状态筛选" className="border border-border">
+                {filters.map((item) => <TabsTrigger key={item.id} value={item.id}>{item.label}</TabsTrigger>)}
+              </TabsList>
+            </Tabs>
             <div className="account-task-filter-tools"><label><Search aria-hidden /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索任务名称或关键词" /></label><button type="button" className="account-task-workspace-filter">全部工作台<ChevronDown aria-hidden /></button></div>
           </div>
 
@@ -117,6 +133,7 @@ export default function AccountTasksContent() {
           <section className="account-task-recent"><div className="account-task-insight-head"><h2>最近完成的任务</h2><button type="button">查看全部</button></div>{recentDone.length ? recentDone.map((task) => <Link href={`/studio?session=${encodeURIComponent(task.session.id)}`} key={task.session.id}><CheckCircle2 aria-hidden />{task.session.title}<span>{formatTime(task.session.updatedAt).slice(-5)}</span></Link>) : <p>完成的任务会显示在这里。</p>}</section>
         </aside>
       </div>
-    </div>
+      </div>
+    </ConsolePage>
   );
 }

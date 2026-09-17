@@ -1,14 +1,18 @@
 "use client";
 
 import { Check, Copy, Gift, Mail, Share2, UserPlus } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { useModals } from "@/components/providers";
+import { ConsolePage } from "@/components/console/ConsolePage";
 
 export default function AccountInviteContent() {
   const { account, openLogin } = useModals();
-  const [origin, setOrigin] = useState("");
+  const origin = useSyncExternalStore(
+    () => () => undefined,
+    () => window.location.origin,
+    () => "",
+  );
   const [copied, setCopied] = useState(false);
-  useEffect(() => setOrigin(window.location.origin), []);
   const inviteCode = useMemo(() => account ? `REIZO-${account.id.replace(/-/g, "").slice(0, 8).toUpperCase()}` : "", [account]);
   const inviteUrl = origin && inviteCode ? `${origin}/?invite=${inviteCode}` : "";
 
@@ -39,14 +43,15 @@ export default function AccountInviteContent() {
   }
 
   return (
-    <div className="account-invite">
-      <header><p>用户中心 / 邀请好友</p><h1>邀请好友</h1><span>分享专属入口，邀请朋友或团队成员一起开始使用 Reizo。</span></header>
+    <ConsolePage title="邀请好友">
+      <div className="account-invite">
       <section className="account-invite-hero"><span><Gift aria-hidden /></span><div><p>专属邀请码</p><strong>{inviteCode}</strong><small>邀请链接可直接分享；奖励规则接入后会在此展示。</small></div></section>
       <section className="account-invite-panel">
         <h2>分享邀请链接</h2>
         <div className="account-invite-link"><input readOnly value={inviteUrl || "正在生成邀请链接…"} aria-label="邀请链接" /><button type="button" onClick={() => void copyInvite()} disabled={!inviteUrl}>{copied ? <Check aria-hidden /> : <Copy aria-hidden />}{copied ? "已复制" : "复制链接"}</button></div>
         <div className="account-invite-actions"><button type="button" onClick={() => void shareInvite()}><Share2 aria-hidden />立即分享</button><a href={`mailto:?subject=${encodeURIComponent("邀请你加入 Reizo")}&body=${encodeURIComponent(`邀请你体验 Reizo AI 能力：${inviteUrl}`)}`}><Mail aria-hidden />邮件邀请</a></div>
       </section>
-    </div>
+      </div>
+    </ConsolePage>
   );
 }

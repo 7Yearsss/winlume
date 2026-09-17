@@ -4,6 +4,8 @@ import Link from "next/link";
 import { KeyRound, Mail, PieChart, ShieldCheck, UserPlus, UserRound, WalletCards, Workflow } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useModals } from "@/components/providers";
+import { ConsolePage } from "@/components/console/ConsolePage";
+import { AnimatedNumber } from "@/components/motion/animated-number";
 import { getConsoleOverview } from "@/lib/console/client";
 import type { ConsoleOverview } from "@/lib/console/types";
 
@@ -30,13 +32,13 @@ export default function AccountOverview() {
   const displayName = account.display_name || account.username;
 
   return (
-    <div className="account-personal">
-      <header><h1>个人中心</h1><span>查看账户信息与安全设置</span></header>
+    <ConsolePage title="个人资料">
       {error ? <p className="portal-account-notice">{error}</p> : null}
+      <div className="account-personal">
       <div className="account-personal-stats">
-        <article><WalletCards aria-hidden /><span>余额</span><strong>{overview?.wallet.syncStatus === "unavailable" ? "暂不可用" : `¥${fmt(available)}`}</strong><Link href="/account/wallet">去充值</Link></article>
-        <article><Workflow aria-hidden /><span>累计消费</span><strong>{overview?.wallet.syncStatus === "unavailable" ? "暂不可用" : fmt(used)}</strong><Link href="/account/usage">使用明细</Link></article>
-        <article><PieChart aria-hidden /><span>会员剩余额度</span><strong>{remaining}%</strong><button type="button" onClick={openMembership}>额度说明</button></article>
+        <article><WalletCards aria-hidden /><span>余额</span><strong>{overview?.wallet.syncStatus === "unavailable" ? "暂不可用" : <AnimatedNumber value={available} format={(n) => `¥${fmt(n)}`} />}</strong><Link href="/account/wallet">去充值</Link></article>
+        <article><Workflow aria-hidden /><span>累计消费</span><strong>{overview?.wallet.syncStatus === "unavailable" ? "暂不可用" : <AnimatedNumber value={used} format={fmt} />}</strong><Link href="/account/usage">使用明细</Link></article>
+        <article><PieChart aria-hidden /><span>会员剩余额度</span><strong><AnimatedNumber value={remaining} format={(n) => `${Math.round(n)}%`} /></strong><button type="button" onClick={openMembership}>额度说明</button></article>
       </div>
       <section className="account-personal-panel">
         <h2>账户信息</h2>
@@ -49,6 +51,7 @@ export default function AccountOverview() {
         <div><UserPlus aria-hidden /><strong>邀请好友</strong><em>生成专属邀请链接，邀请朋友或团队成员。</em><Link href="/account/invite">去邀请</Link></div>
         <div><KeyRound aria-hidden /><strong>API密钥</strong><em>{overview ? `${overview.keys.active} 个可用密钥` : "正在读取"}</em><Link href="/account/keys">管理密钥</Link></div>
       </section>
-    </div>
+      </div>
+    </ConsolePage>
   );
 }
