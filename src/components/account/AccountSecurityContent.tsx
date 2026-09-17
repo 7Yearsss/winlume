@@ -38,7 +38,7 @@ export default function AccountSecurityContent() {
   }
 
   return (
-    <ConsolePage eyebrow="用户中心 / 账户安全" title="修改密码" description="修改后会退出当前登录，请使用新密码重新登录。">
+    <ConsolePage title="账户安全" description="修改密码后会退出当前登录，请使用新密码重新登录。">
       <div className="account-security">
       <section className="account-security-panel">
         <div className="account-security-intro"><span><ShieldCheck aria-hidden /></span><div><h2>保护你的账户</h2><p>新密码须为 8 至 72 个 UTF-8 字节，建议使用未在其他网站使用过的密码。</p></div></div>

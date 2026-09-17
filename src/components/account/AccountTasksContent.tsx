@@ -79,7 +79,6 @@ export default function AccountTasksContent() {
   return (
     <ConsolePage
       title="任务看板"
-      description="查看工作台中任务的实时进度与状态"
       actions={
         <StatefulButton
           state={loading ? "loading" : "idle"}

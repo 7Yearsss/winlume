@@ -43,7 +43,7 @@ export default function AccountInviteContent() {
   }
 
   return (
-    <ConsolePage eyebrow="用户中心 / 邀请好友" title="邀请好友" description="分享专属入口，邀请朋友或团队成员一起开始使用 Reizo。">
+    <ConsolePage title="邀请好友">
       <div className="account-invite">
       <section className="account-invite-hero"><span><Gift aria-hidden /></span><div><p>专属邀请码</p><strong>{inviteCode}</strong><small>邀请链接可直接分享；奖励规则接入后会在此展示。</small></div></section>
       <section className="account-invite-panel">
