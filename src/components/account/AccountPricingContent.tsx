@@ -74,11 +74,10 @@ export default function AccountPricingContent({
   groupRatio,
   models,
 }: AccountPricingProps) {
-  const description = "查看当前生效的计费目录如何为你的请求定价，账户信息只读，不能在此修改。";
 
   if (status === "unauthenticated") {
     return (
-      <ConsolePage title="我的计费" description={description}>
+      <ConsolePage title="我的计费">
         <ConsoleEmptyState title="请先登录" description="登录后即可查看你的实际计费费率。" />
       </ConsolePage>
     );
@@ -86,7 +85,7 @@ export default function AccountPricingContent({
 
   if (status === "unconfigured") {
     return (
-      <ConsolePage title="我的计费" description={description}>
+      <ConsolePage title="我的计费">
         <ConsoleEmptyState title="计费数据暂不可用" description="平台数据库尚未配置，请稍后重试。" />
       </ConsolePage>
     );
@@ -94,7 +93,7 @@ export default function AccountPricingContent({
 
   if (status === "no_active_catalog") {
     return (
-      <ConsolePage title="我的计费" description={description}>
+      <ConsolePage title="我的计费">
         <ConsoleEmptyState title="暂无生效的计费目录" description="网关尚未激活任何计费目录版本，费率暂时无法展示。" />
       </ConsolePage>
     );
@@ -103,7 +102,7 @@ export default function AccountPricingContent({
   const isDefaultFallback = billingGroupSource === "default";
 
   return (
-    <ConsolePage title="我的计费" description={description}>
+    <ConsolePage title="我的计费">
       <div className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-4">
           <Card>

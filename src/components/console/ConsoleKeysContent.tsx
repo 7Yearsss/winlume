@@ -490,7 +490,6 @@ export default function ConsoleKeysContent() {
   return (
     <ConsolePage
       title="API密钥"
-      description="外部程序使用 API密钥；工作台登录即可使用，两者共享当前工作区资源。"
       actions={<div className="flex gap-2">
         <Button variant="outline" disabled={loading} onClick={() => void load(organizationId)}>
           <RefreshCw data-icon="inline-start" />刷新

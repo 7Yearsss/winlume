@@ -40,7 +40,7 @@ export default function AccountUsageLogsContent() {
   }, [load]);
 
   return (
-    <ConsolePage title="请求日志" description="单次请求的模型、耗时和费用，用于排查具体调用。">
+    <ConsolePage title="请求日志">
       {organizations.length > 1 && organizationId ? (
         <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
           <span>工作区</span>

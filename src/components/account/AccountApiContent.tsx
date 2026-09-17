@@ -7,7 +7,7 @@ const curlExample = "curl https://api.winlume.com/v1/chat/completions -H \"Autho
 
 export default function AccountApiContent() {
   return (
-    <ConsolePage title="API 文档" description="Reizo Gateway 兼容 OpenAI 风格请求格式。使用 API密钥 作为 Bearer Token。">
+    <ConsolePage title="API 文档">
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <section className="space-y-5">
           <Card>

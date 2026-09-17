@@ -16,7 +16,6 @@ export default function AccountEnterpriseContent() {
   return (
     <ConsolePage
       title="对公结算"
-      description="企业额度合作申请。通过后走线下签约，这里不处理日常充值和消耗。"
     >
       <Card>
         <CardHeader>
