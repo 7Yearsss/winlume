@@ -210,7 +210,6 @@ export default function SkillAdminContent() {
 
   return (
     <ConsolePage
-      eyebrow="平台"
       title="Skill 配置"
       actions={
         <div className="flex flex-wrap gap-2">

@@ -100,7 +100,6 @@ export default function FeedbackAdminContent() {
 
   return (
     <ConsolePage
-      eyebrow="平台"
       title="反馈列表"
       actions={
         <select

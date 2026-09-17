@@ -1190,7 +1190,6 @@ export default function PortalContentAdminContent({ initialSection = "carousel" 
     );
   return (
     <ConsolePage
-      eyebrow="平台"
       title="门户内容管理"
     >
       {loading ? (
