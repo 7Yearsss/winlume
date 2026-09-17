@@ -32,7 +32,7 @@ export default function AccountOverview() {
   const displayName = account.display_name || account.username;
 
   return (
-    <ConsolePage title="个人中心">
+    <ConsolePage title="个人资料">
       {error ? <p className="portal-account-notice">{error}</p> : null}
       <div className="account-personal">
       <div className="account-personal-stats">
